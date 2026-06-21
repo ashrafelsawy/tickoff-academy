@@ -565,14 +565,23 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       <div class="nav-item active" data-screen="dashboard"><div class="nav-icon-box" style="background:#0D2A12;color:#6DC82A"><i class="ti ti-layout-dashboard"></i></div><span class="nav-text">الداشبورد</span></div>
     </div>
     <div class="nav-section">
-      <div class="nav-label">إدارة</div>
-      <div class="nav-item" data-screen="players"><div class="nav-icon-box" style="background:#0A1E35;color:#4A9EE0"><i class="ti ti-users"></i></div><span class="nav-text">اللاعبون</span></div>
-      <div class="nav-item" data-screen="coaches"><div class="nav-icon-box" style="background:#082A1E;color:#1D9E75"><i class="ti ti-whistle"></i></div><span class="nav-text">المدربون</span></div>
-      <div class="nav-item" data-screen="subscriptions"><div class="nav-icon-box" style="background:#0D2A12;color:#6DC82A"><i class="ti ti-credit-card"></i></div><span class="nav-text">الاشتراكات</span></div>
+      <div class="nav-label">العمليات اليومية</div>
       <div class="nav-item" data-screen="attendance"><div class="nav-icon-box" style="background:#0A1E12;color:#2D8A3E"><i class="ti ti-clipboard-check"></i></div><span class="nav-text">الحضور</span></div>
-      <div class="nav-item" data-screen="expenses"><div class="nav-icon-box" style="background:#2A0A0A;color:#E03535"><i class="ti ti-receipt"></i></div><span class="nav-text">المصروفات</span></div>
       <div class="nav-item" data-screen="schedule"><div class="nav-icon-box" style="background:#1A0A35;color:#8B5CF6"><i class="ti ti-calendar"></i></div><span class="nav-text">الجدول</span></div>
+      <div class="nav-item" data-screen="evaluations"><div class="nav-icon-box" style="background:#2A2000;color:#F5C518"><i class="ti ti-star"></i></div><span class="nav-text">التقييمات</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">اللاعبون والفرق</div>
+      <div class="nav-item" data-screen="players"><div class="nav-icon-box" style="background:#0A1E35;color:#4A9EE0"><i class="ti ti-users"></i></div><span class="nav-text">اللاعبون</span></div>
+      <div class="nav-item" data-screen="parent_view"><div class="nav-icon-box" style="background:#082A1E;color:#1D9E75"><i class="ti ti-eye"></i></div><span class="nav-text">عرض ولي الأمر</span></div>
+      <div class="nav-item" data-screen="coaches"><div class="nav-icon-box" style="background:#082A1E;color:#1D9E75"><i class="ti ti-whistle"></i></div><span class="nav-text">المدربون</span></div>
       <div class="nav-item" data-screen="teams"><div class="nav-icon-box" style="background:#2A2000;color:#F5C518"><i class="ti ti-tournament"></i></div><span class="nav-text">فرق الدوري</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">المالية</div>
+      <div class="nav-item" data-screen="subscriptions"><div class="nav-icon-box" style="background:#0D2A12;color:#6DC82A"><i class="ti ti-credit-card"></i></div><span class="nav-text">الاشتراكات</span></div>
+      <div class="nav-item" data-screen="expenses"><div class="nav-icon-box" style="background:#2A0A0A;color:#E03535"><i class="ti ti-receipt"></i></div><span class="nav-text">المصروفات</span></div>
+      <div class="nav-item" data-screen="store"><div class="nav-icon-box" style="background:#2A1000;color:#F97316"><i class="ti ti-shopping-bag"></i></div><span class="nav-text">المتجر</span></div>
     </div>
     <div class="nav-section">
       <div class="nav-label">تقارير</div>
@@ -582,10 +591,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
     </div>
     <div class="nav-section">
       <div class="nav-label">أخرى</div>
-      <div class="nav-item" data-screen="evaluations"><div class="nav-icon-box" style="background:#2A2000;color:#F5C518"><i class="ti ti-star"></i></div><span class="nav-text">التقييمات</span></div>
       <div class="nav-item" data-screen="equipment"><div class="nav-icon-box" style="background:#1A2030;color:#94A3B8"><i class="ti ti-tools"></i></div><span class="nav-text">المعدات</span></div>
-      <div class="nav-item" data-screen="store"><div class="nav-icon-box" style="background:#2A1000;color:#F97316"><i class="ti ti-shopping-bag"></i></div><span class="nav-text">المتجر</span></div>
-      <div class="nav-item" data-screen="parent_view"><div class="nav-icon-box" style="background:#082A1E;color:#1D9E75"><i class="ti ti-eye"></i></div><span class="nav-text">عرض ولي الأمر</span></div>
       <div class="nav-item" data-screen="settings"><div class="nav-icon-box" style="background:#1A2030;color:#94A3B8"><i class="ti ti-settings"></i></div><span class="nav-text">الإعدادات</span></div>
     </div>
   </nav>
@@ -693,6 +699,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       <div class="filter-bar">
         <div class="search-wrap"><i class="ti ti-search"></i><input type="text" placeholder="بحث..." id="sub-search" oninput="loadSubs()"></div>
         <select id="sub-status" onchange="loadSubs()" style="width:130px"><option value="">كل الحالات</option><option value="مدفوع">مدفوع</option><option value="متأخر">متأخر</option></select>
+        <select id="sub-branch" onchange="loadSubs()" style="width:130px"><option value="">كل الفروع</option></select>
       </div>
       <div class="table-wrap">
         <table><thead><tr><th>اللاعب</th><th>الخطة</th><th>المبلغ</th><th>تاريخ الدفع</th><th>الانتهاء</th><th>طريقة الدفع</th><th>الحالة</th><th></th></tr></thead>
@@ -715,6 +722,9 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
             <option value="جاري">جاري</option>
             <option value="مكتمل">مكتمل</option>
             <option value="ملغي">ملغي</option>
+          </select>
+          <select id="ls-branch-filter" onchange="loadLeagueSubs()" style="width:140px">
+            <option value="">كل الفروع</option>
           </select>
           <button class="btn btn-primary" style="margin-right:auto" onclick="openModal('leagueSubModal');loadPlayerSelect('lsm-player');loadTeamSelectForMatch()"><i class="ti ti-plus"></i> اشتراك دوري جديد</button>
         </div>
@@ -1515,17 +1525,29 @@ async function loadPlayerSelect(id){
 
 let subPage=1;
 async function loadSubs(p){if(p)subPage=p;
-  const s=document.getElementById('sub-status').value;const pp=10;
+  const s=document.getElementById('sub-status').value;const branchId=document.getElementById('sub-branch')?.value||'';const pp=10;
   const today=new Date().toISOString().split('T')[0];
   let data,count;
 
   if(s==='متأخر'){
-    // "متأخر" = subscription expired (expires_at < today), regardless of stored status
-    let query=sb.from('subscriptions').select('*,players(first_name,last_name)',{count:'exact'}).order('expires_at',{ascending:true}).lt('expires_at',today).range((subPage-1)*pp,subPage*pp-1);
-    const res=await query; data=res.data; count=res.count;
+    // "متأخر" = expired subscriptions + players with no subscription record at all
+    let expiredQuery=sb.from('subscriptions').select('*,players(first_name,last_name)').lt('expires_at',today);
+    let activeQuery=sb.from('subscriptions').select('player_id').gte('expires_at',today);
+    let playersQuery=sb.from('players').select('id,first_name,last_name').eq('status','نشط');
+    if(branchId){expiredQuery=expiredQuery.eq('branch_id',branchId);activeQuery=activeQuery.eq('branch_id',branchId);playersQuery=playersQuery.eq('branch_id',branchId);}
+    const[{data:expiredSubs},{data:allPlayers},{data:activeSubs}]=await Promise.all([expiredQuery,playersQuery,activeQuery]);
+    const coveredIds=new Set((activeSubs||[]).map(x=>x.player_id));
+    const expiredPlayerIds=new Set((expiredSubs||[]).map(x=>x.player_id));
+    const noSubRows=(allPlayers||[])
+      .filter(pl=>!coveredIds.has(pl.id)&&!expiredPlayerIds.has(pl.id))
+      .map(pl=>({id:'nosub-'+pl.id,player_id:pl.id,players:{first_name:pl.first_name,last_name:pl.last_name},plan:null,amount:0,paid_at:null,expires_at:null,payment_method:null,status:'لا يوجد اشتراك',isVirtual:true}));
+    const merged=[...(expiredSubs||[]),...noSubRows];
+    count=merged.length;
+    data=merged.slice((subPage-1)*pp,subPage*pp);
   } else {
     let query=sb.from('subscriptions').select('*,players(first_name,last_name)',{count:'exact'}).order('created_at',{ascending:false}).range((subPage-1)*pp,subPage*pp-1);
     if(s) query=query.eq('status',s);
+    if(branchId) query=query.eq('branch_id',branchId);
     const res=await query; data=res.data; count=res.count;
   }
 
@@ -1533,16 +1555,26 @@ async function loadSubs(p){if(p)subPage=p;
   if(!data||!data.length){tb.innerHTML='<tr><td colspan="8" class="empty-row">لا توجد اشتراكات بعد</td></tr>';}
   else{tb.innerHTML=data.map(s=>{
     const name=s.players?`${s.players.first_name} ${s.players.last_name}`:'—';
+    if(s.isVirtual){
+      return`<tr><td style="font-weight:600">${name}</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>${statusBadge('متأخر')}</td><td><div style="display:flex;gap:4px;justify-content:flex-end"><button class="btn btn-sm btn-primary" onclick="openModal('subModal');loadPlayerSelect('s-player');setTimeout(()=>{document.getElementById('s-player').value='${s.player_id}'},300)"><i class="ti ti-plus"></i> تسجيل دفعة</button></div></td></tr>`;
+    }
     const isOverdue=s.expires_at&&s.expires_at<today&&s.status!=='مدفوع كامل';
     const displayStatus=isOverdue?'متأخر':(s.status||'مدفوع');
     return`<tr><td style="font-weight:600">${name}</td><td>${s.plan||'—'}</td><td style="font-weight:600">${fmt(s.amount)} ج</td><td>${fmtDate(s.paid_at)}</td><td style="${isOverdue?'color:var(--red-dk);font-weight:600':''}">${fmtDate(s.expires_at)}</td><td style="font-size:12px;color:var(--text3)">${s.payment_method||'—'}</td><td>${statusBadge(displayStatus)}</td><td><div style="display:flex;gap:4px;justify-content:flex-end"><button class="icon-btn" onclick="openEditSub(_get('${_set(s.id,s)}'))"  title="تعديل"><i class="ti ti-edit"></i></button><button class="icon-btn danger" onclick="deleteRecord('subscriptions','${s.id}',loadSubs)" title="حذف"><i class="ti ti-trash"></i></button></div></td></tr>`;}).join('');}
   const pg=pgHtml(count||0,subPage,pp,'loadSubs');
   document.getElementById('sub-pginfo').textContent=pg.info;document.getElementById('sub-pgbtns').innerHTML=pg.btns;
 }
+function isValidYear(dateStr){
+  if(!dateStr) return true;
+  const year=Number(dateStr.split('-')[0]);
+  return year>=2020&&year<=2035;
+}
 async function saveSub(){
   const pid=document.getElementById('s-player').value,amt=document.getElementById('s-amount').value,paid=document.getElementById('s-paid').value;
   if(!pid||!amt||!paid){toast('يرجى ملء الحقول المطلوبة *','error');return;}
-  const{error}=await sb.from('subscriptions').insert({player_id:pid,amount:Number(amt),plan:document.getElementById('s-plan').value,paid_at:paid,expires_at:document.getElementById('s-expires').value||null,payment_method:document.getElementById('s-method').value,status:document.getElementById('s-status').value,notes:document.getElementById('s-notes').value||null});
+  const expiresVal=document.getElementById('s-expires').value;
+  if(!isValidYear(paid)||!isValidYear(expiresVal)){toast('تاريخ غير صحيح — تأكد من كتابة السنة كاملة (مثال: 2026)','error');return;}
+  const{error}=await sb.from('subscriptions').insert({player_id:pid,amount:Number(amt),plan:document.getElementById('s-plan').value,paid_at:paid,expires_at:expiresVal||null,payment_method:document.getElementById('s-method').value,status:document.getElementById('s-status').value,notes:document.getElementById('s-notes').value||null});
   if(error){toast('خطأ: '+error.message,'error');return;}
   toast('تم تسجيل الدفعة بنجاح ✓');closeModal('subModal');loadSubs();loadDashboard();
 }
@@ -2088,8 +2120,19 @@ async function saveLeagueSub(){
 
 async function loadLeagueSubs(){
   const statusFilter=document.getElementById('ls-status-filter')?.value||'';
+  const branchId=document.getElementById('ls-branch-filter')?.value||'';
+
+  // Populate branch filter
+  const brSel=document.getElementById('ls-branch-filter');
+  if(brSel&&allBranches.length){
+    const cur=brSel.value;
+    brSel.innerHTML='<option value="">كل الفروع</option>'+allBranches.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+    if(cur) brSel.value=cur;
+  }
+
   let query=sb.from('league_subscriptions').select('*,players(id,first_name,last_name,photo_url,group_age),teams(name)').order('created_at',{ascending:false});
   if(statusFilter) query=query.eq('status',statusFilter);
+  if(branchId) query=query.eq('branch_id',branchId);
   const{data:subs}=await query;
 
   if(!subs||!subs.length){
@@ -2440,7 +2483,7 @@ async function openTeamDetail(teamId){
     sb.from('team_players').select('*,players(id,first_name,last_name,position,photo_url,group_age),external_players(id,name,club,position)').eq('team_id',teamId),
   ]);
 
-  if(!team){document.getElementById('team-detail-content').innerHTML='<div style="color:var(--text3)">فريق غير موجود</div>';return;}
+  if(!team){document.getElementById('team-detail-body').innerHTML='<div style="color:var(--text3)">فريق غير موجود</div>';return;}
 
   const academyPlayers=(teamPlayers||[]).filter(tp=>tp.player_id);
   const externalPlayers=(teamPlayers||[]).filter(tp=>tp.external_player_id);
@@ -3288,7 +3331,7 @@ async function loadBranchSelect(selId, isModal=false){
 
 function populateBranchSelects(){
   // Filter selects (in table headers) - show "كل الفروع"
-  const filterSelIds=['pl-branch','exp-branch','att-branch'];
+  const filterSelIds=['pl-branch','exp-branch','att-branch','sub-branch','ls-branch-filter'];
   // Modal selects - show "اختر فرع..."
   const modalSelIds=['p-branch','e-branch','a-branch','sc-branch'];
 
@@ -3399,11 +3442,14 @@ async function updateSub(){
   const id=document.getElementById('esb-id').value;
   const amt=document.getElementById('esb-amount').value;
   if(!amt){toast('يرجى إدخال المبلغ','error');return;}
+  const paidVal=document.getElementById('esb-paid').value;
+  const expiresVal=document.getElementById('esb-expires').value;
+  if(!isValidYear(paidVal)||!isValidYear(expiresVal)){toast('تاريخ غير صحيح — تأكد من كتابة السنة كاملة (مثال: 2026)','error');return;}
   const{error}=await sb.from('subscriptions').update({
     amount:Number(amt),
     plan:document.getElementById('esb-plan').value,
-    paid_at:document.getElementById('esb-paid').value||null,
-    expires_at:document.getElementById('esb-expires').value||null,
+    paid_at:paidVal||null,
+    expires_at:expiresVal||null,
     payment_method:document.getElementById('esb-method').value,
     status:document.getElementById('esb-status').value,
     notes:document.getElementById('esb-notes').value||null,
@@ -4609,3 +4655,4 @@ initAuth();
 </div>
 </body>
 </html>
+
