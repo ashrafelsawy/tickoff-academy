@@ -549,6 +549,13 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
 .installment-amount{font-size:18px;font-weight:700;margin-bottom:6px}
 .installment-date{font-size:11px;color:var(--text3);margin-bottom:8px}
 .progress-circle-wrap{position:relative;width:50px;height:50px}
+
+.quick-date-btns{display:flex;gap:6px;margin-bottom:8px}
+.quick-date-btn{padding:4px 14px;font-size:12px;font-weight:600;border:1px solid var(--border);border-radius:20px;background:var(--bg);cursor:pointer;color:var(--text3);transition:all .15s}
+.quick-date-btn:hover,.quick-date-btn.active{background:var(--primary-lt);border-color:var(--primary);color:var(--primary-dk)}
+
+.date-with-day{display:flex;flex-direction:column;gap:4px}
+.day-name-display{font-size:12px;font-weight:600;color:var(--primary);padding:3px 10px;background:var(--primary-lt);border-radius:20px;display:inline-block;min-height:20px}
 </style>
 </head>
 <body>
@@ -610,6 +617,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
+    <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
       <span id="connLabel">جاري الاتصال...</span>
@@ -630,6 +638,10 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       <div class="topbar-sub" id="pageSub">أكاديمية Tick Off — موسم 2024-2025</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
+      <div id="topbar-date" style="font-size:13px;font-weight:600;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:5px 12px;display:flex;align-items:center;gap:6px">
+        <i class="ti ti-calendar" style="color:var(--primary)"></i>
+        <span id="topbar-date-text"></span>
+      </div>
       <div class="topbar-toggle" onclick="toggleTheme()" title="تبديل المظهر" id="topbarToggleBtn">
         <i class="ti ti-moon" id="topbarToggleIcon"></i>
       </div>
@@ -680,10 +692,69 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
 
     <!-- COACHES -->
     <div id="screen-coaches" class="screen">
-      <div class="table-wrap">
-        <div class="card-head"><span class="card-title"><i class="ti ti-whistle"></i> المدربون</span><button class="btn btn-primary btn-sm" onclick="openModal('coachModal')"><i class="ti ti-plus"></i> مدرب جديد</button></div>
-        <table><thead><tr><th>الاسم</th><th>الهاتف</th><th>تاريخ الإضافة</th><th></th></tr></thead>
-        <tbody id="coaches-table"><tr><td colspan="4"><div class="loading"><div class="spinner"></div></div></td></tr></tbody></table>
+      <div style="display:flex;gap:8px;margin-bottom:1.25rem;border-bottom:1px solid var(--border);padding-bottom:.75rem">
+        <button class="btn btn-primary" id="tab-coaches-list" onclick="switchCoachesTab('list')"><i class="ti ti-whistle"></i> المدربون</button>
+        <button class="btn" id="tab-coaches-att" onclick="switchCoachesTab('att')"><i class="ti ti-clipboard-check"></i> الحضور والتقرير</button>
+      </div>
+
+      <!-- COACHES LIST TAB -->
+      <div id="coaches-list-tab">
+        <div class="table-wrap">
+          <div class="card-head"><span class="card-title"><i class="ti ti-whistle"></i> المدربون</span><button class="btn btn-primary btn-sm" onclick="openModal('coachModal')"><i class="ti ti-plus"></i> مدرب جديد</button></div>
+          <table><thead><tr><th>الاسم</th><th>الهاتف</th><th>تاريخ الإضافة</th><th></th></tr></thead>
+          <tbody id="coaches-table"><tr><td colspan="4"><div class="loading"><div class="spinner"></div></div></td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- COACH ATTENDANCE TAB -->
+      <div id="coaches-att-tab" style="display:none">
+        <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" id="tab-catt-register" onclick="switchCoachAttTab('register')"><i class="ti ti-clipboard-check"></i> تسجيل الحضور</button>
+            <button class="btn btn-sm" id="tab-catt-report" onclick="switchCoachAttTab('report')"><i class="ti ti-chart-bar"></i> التقرير الشهري</button>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="autoSetToday('ca-date');openModal('coachAttModal');loadCoachSelectGeneric('ca-coach');const brSel=document.getElementById('ca-branch');if(brSel)brSel.innerHTML='<option value=&quot;&quot;>اختر فرع...</option>'+allBranches.map(b=>`<option value=&quot;${b.id}&quot;>${b.name}</option>`).join('')"><i class="ti ti-plus"></i> تسجيل حضور</button>
+        </div>
+
+        <!-- REGISTER TAB -->
+        <div id="catt-register-tab">
+          <div class="filter-bar">
+            <input type="date" id="catt-date" onchange="loadCoachAtt()" style="width:160px">
+            <select id="catt-branch" onchange="loadCoachAtt()" style="width:150px"><option value="">كل الفروع</option></select>
+            <select id="catt-status-filter" onchange="loadCoachAtt()" style="width:130px">
+              <option value="">كل الحالات</option>
+              <option value="حاضر">حاضر</option>
+              <option value="غائب">غائب</option>
+              <option value="متأخر">متأخر</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>المدرب</th><th>الفرع</th><th>التاريخ</th><th>الحالة</th><th>ملاحظات</th><th></th></tr></thead>
+              <tbody id="catt-table"><tr><td colspan="6"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- REPORT TAB -->
+        <div id="catt-report-tab" style="display:none">
+          <div class="filter-bar">
+            <select id="catt-report-month" onchange="loadCoachAttReport()" style="width:140px">
+              <option value="1">يناير</option><option value="2">فبراير</option><option value="3">مارس</option>
+              <option value="4">أبريل</option><option value="5">مايو</option><option value="6">يونيو</option>
+              <option value="7">يوليو</option><option value="8">أغسطس</option><option value="9">سبتمبر</option>
+              <option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option>
+            </select>
+            <select id="catt-report-year" onchange="loadCoachAttReport()" style="width:110px">
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
+            </select>
+            <select id="catt-report-branch" onchange="loadCoachAttReport()" style="width:150px"><option value="">كل الفروع</option></select>
+          </div>
+          <div id="catt-report-content">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -967,6 +1038,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
     </div>
 
     </div>
+
     <!-- PLAYER PROFILE -->
     <div id="screen-player_profile" class="screen">
       <div id="profileContent"><div class="loading"><div class="spinner"></div> جاري التحميل...</div></div>
@@ -1233,7 +1305,34 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       <div class="field"><label>نوع اللاعب</label><select id="p-type"><option value="أكاديمية">لاعب الأكاديمية</option><option value="خارجي">لاعب أكاديمية + خارجي</option></select></div>
       <div class="field" id="p-extclub-field"><label>النادي الخارجي</label><input id="p-extclub" type="text" placeholder="اسم النادي"></div>
       <div class="field full"><label>الفرع</label><select id="p-branch"><option value="">اختر فرع...</option></select></div>
-      <div class="field full"><label>ملاحظات</label><textarea id="p-notes" placeholder="أي ملاحظات..."></textarea></div>
+      <div style="grid-column:1/-1;border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
+        <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:10px;display:flex;align-items:center;gap:6px"><i class="ti ti-heart-rate-monitor"></i> البيانات الرياضية والصحية</div>
+        <div class="form-grid">
+          <div class="field"><label>المركز</label><select id="p-position">
+            <option value="">اختر المركز...</option>
+            <option value="حارس مرمى">حارس مرمى (GK)</option>
+            <option value="قلب دفاع أيمن">قلب دفاع أيمن (CB-R)</option>
+            <option value="قلب دفاع أيسر">قلب دفاع أيسر (CB-L)</option>
+            <option value="ظهير أيمن">ظهير أيمن (RB)</option>
+            <option value="ظهير أيسر">ظهير أيسر (LB)</option>
+            <option value="وسط دفاعي">وسط دفاعي (CDM)</option>
+            <option value="وسط ميدان أيمن">وسط ميدان أيمن (CM-R)</option>
+            <option value="وسط ميدان أيسر">وسط ميدان أيسر (CM-L)</option>
+            <option value="وسط هجومي">وسط هجومي (CAM)</option>
+            <option value="جناح أيمن">جناح أيمن (RW)</option>
+            <option value="جناح أيسر">جناح أيسر (LW)</option>
+            <option value="مهاجم صريح">مهاجم صريح (ST)</option>
+          </select></div>
+          <div class="field"><label>رقم القميص</label><input id="p-jersey" type="number" placeholder="10" min="1" max="99"></div>
+          <div class="field"><label>الوزن (كجم)</label><input id="p-weight" type="number" placeholder="60" step="0.1"></div>
+          <div class="field"><label>الطول (سم)</label><input id="p-height" type="number" placeholder="170"></div>
+          <div class="field"><label>القدم المفضلة</label><select id="p-foot"><option value="يمين">يمين</option><option value="شمال">شمال</option><option value="كلاهما">كلاهما</option></select></div>
+          <div class="field"><label>فصيلة الدم</label><select id="p-blood"><option value="">غير محدد</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+          <div class="field"><label>حالة اللياقة</label><select id="p-fitness"><option value="جيد">جيد</option><option value="ممتاز">ممتاز</option><option value="تحت المراقبة">تحت المراقبة</option><option value="إصابة">إصابة</option></select></div>
+          <div class="field full"><label>ملاحظات طبية</label><textarea id="p-medical" placeholder="إصابات سابقة، حالات خاصة..."></textarea></div>
+        </div>
+      </div>
+      <div class="field full"><label>ملاحظات عامة</label><textarea id="p-notes" placeholder="أي ملاحظات..."></textarea></div>
     </div></div>
     <div class="modal-foot"><button class="btn" onclick="closeModal('playerModal')">إلغاء</button><button class="btn btn-primary" id="savePlayerBtn" onclick="savePlayer()"><i class="ti ti-check"></i> حفظ اللاعب</button></div>
   </div>
@@ -1272,7 +1371,13 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
     <div class="modal-head"><span class="modal-title"><i class="ti ti-clipboard-check"></i>تسجيل حضور</span><button class="icon-btn" onclick="closeModal('attModal')"><i class="ti ti-x"></i></button></div>
     <div class="modal-body"><div class="form-grid">
       <div class="field full"><label>اللاعب *</label><select id="a-player"><option value="">اختر لاعب...</option></select></div>
-      <div class="field"><label>التاريخ *</label><input id="a-date" type="date"></div>
+      <div class="field full"><label>التاريخ *</label>
+        <div class="quick-date-btns">
+          <button type="button" class="quick-date-btn" onclick="setQuickDate('a-date', 0, this);showDayName('a-date','a-day-name')">اليوم</button>
+        </div>
+        <input id="a-date" type="date" oninput="showDayName('a-date','a-day-name')">
+        <div id="a-day-name" class="day-name-display"></div>
+      </div>
       <div class="field"><label>الحالة *</label><select id="a-status"><option value="حاضر">حاضر</option><option value="غائب">غائب</option><option value="متأخر">متأخر</option></select></div>
       <div class="field"><label>الفرع</label><select id="a-branch"><option value="">اختر فرع...</option></select></div>
       <div class="field full"><label>ملاحظة المدرب</label><input id="a-note" type="text" placeholder="..."></div>
@@ -1368,6 +1473,16 @@ document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click
 function toast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+type;setTimeout(()=>t.classList.remove('show'),3000);}
 function fmt(n){return n==null?'—':Number(n).toLocaleString('en-US');}
 function fmtDate(d){if(!d)return'—';const x=new Date(d);return x.toLocaleDateString('en-GB');}
+function fmtDateWithDay(d){
+  if(!d)return'—';
+  const x=new Date(d);
+  if(isNaN(x))return'—';
+  const days=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const day=String(x.getDate()).padStart(2,'0');
+  const month=String(x.getMonth()+1).padStart(2,'0');
+  const year=x.getFullYear();
+  return`${days[x.getDay()]} ${day}-${month}-${year}`;
+}
 function initials(name){if(!name)return'؟';const p=name.trim().split(' ');return p.length>=2?p[0][0]+p[1][0]:p[0].slice(0,2);}
 function statusBadge(s){const m={'نشط':'b-green','موقوف':'b-red','مدفوع':'b-green','متأخر':'b-red','حاضر':'b-green','غائب':'b-red','تدريب':'b-blue','مباراة':'b-coral','فعالية':'b-purple'};return`<span class="badge ${m[s]||'b-gray'}">${s||'—'}</span>`;}
 function pgHtml(total,page,pp,cb){
@@ -1474,7 +1589,7 @@ async function loadPlayers(p){if(p)plPage=p;
     <td style="font-size:13px">${p.position?'<span class="badge b-blue">'+p.position+'</span>':'—'}</td>
     <td>${p.group_age||'—'}</td>
     <td>${p.parent_name||'—'}</td>
-    <td>${p.parent_phone||'—'}</td>
+    <td style="font-size:13px;color:var(--text3);letter-spacing:1px">${p.parent_phone?'••••••'+p.parent_phone.slice(-4):'—'}</td>
     <td>${statusBadge(p.status||'نشط')}</td>
     <td style="font-size:13px;color:var(--text3)">${p.branch_id?allBranches.find(b=>b.id===p.branch_id)?.name||'—':'—'}</td>
     <td><div style="display:flex;gap:4px;justify-content:flex-end">
@@ -1588,7 +1703,7 @@ async function loadAtt(p){if(p)attPage=p;
   const tb=document.getElementById('att-table');
   if(!data||!data.length){tb.innerHTML='<tr><td colspan="5" class="empty-row">لا توجد سجلات حضور بعد</td></tr>';}
   else{tb.innerHTML=data.map(a=>{const name=a.players?`${a.players.first_name} ${a.players.last_name}`:'—';
-    return`<tr><td style="font-weight:600">${name}</td><td>${fmtDate(a.session_date)}</td><td>${statusBadge(a.status)}</td><td style="font-size:12px;color:var(--text3)">${a.coach_note||'—'}</td><td><div style="display:flex;gap:4px;justify-content:flex-end"><button class="icon-btn" onclick="openEditAtt(_get('${_set(a.id,a)}'))"  title="تعديل"><i class="ti ti-edit"></i></button><button class="icon-btn danger" onclick="deleteRecord('attendance','${a.id}',loadAtt)" title="حذف"><i class="ti ti-trash"></i></button></div></td></tr>`;}).join('');}
+    return`<tr><td style="font-weight:600">${name}</td><td>${fmtDateWithDay(a.session_date)}</td><td>${statusBadge(a.status)}</td><td style="font-size:12px;color:var(--text3)">${a.coach_note||'—'}</td><td><div style="display:flex;gap:4px;justify-content:flex-end"><button class="icon-btn" onclick="openEditAtt(_get('${_set(a.id,a)}'))"  title="تعديل"><i class="ti ti-edit"></i></button><button class="icon-btn danger" onclick="deleteRecord('attendance','${a.id}',loadAtt)" title="حذف"><i class="ti ti-trash"></i></button></div></td></tr>`;}).join('');}
   const pg=pgHtml(count||0,attPage,pp,'loadAtt');
   document.getElementById('att-pginfo').textContent=pg.info;document.getElementById('att-pgbtns').innerHTML=pg.btns;
 }
@@ -1742,6 +1857,7 @@ function applyRoleUI(role, name){
   if(old) old.remove();
   actions.prepend(userDiv);
 
+  updateTopbarDate();
   // Update sidebar user info
   const sidebarInfo=document.getElementById('sidebar-user-info');
   const sidebarAv=document.getElementById('sidebar-user-av');
@@ -2034,9 +2150,276 @@ async function saveMatchRating(){
   openMatchDetail(matchId);
 }
 
+
+
+function switchCoachesTab(tab){
+  document.getElementById('coaches-list-tab').style.display=tab==='list'?'block':'none';
+  document.getElementById('coaches-att-tab').style.display=tab==='att'?'block':'none';
+  document.getElementById('tab-coaches-list').className=tab==='list'?'btn btn-primary':'btn';
+  document.getElementById('tab-coaches-att').className=tab==='att'?'btn btn-primary':'btn';
+  if(tab==='list') loadCoaches();
+  if(tab==='att') loadCoachAtt();
+}
+// ============================================================
+// COACH ATTENDANCE
+// ============================================================
+function switchCoachAttTab(tab){
+  document.getElementById('catt-register-tab').style.display=tab==='register'?'block':'none';
+  document.getElementById('catt-report-tab').style.display=tab==='report'?'block':'none';
+  document.getElementById('tab-catt-register').className=tab==='register'?'btn btn-primary':'btn';
+  document.getElementById('tab-catt-report').className=tab==='report'?'btn btn-primary':'btn';
+  if(tab==='register') loadCoachAtt();
+  if(tab==='report') loadCoachAttReport();
+}
+
+async function loadCoachAtt(){
+  // Populate branch filter
+  const brSel=document.getElementById('catt-branch');
+  if(brSel&&allBranches.length&&brSel.options.length<=1){
+    brSel.innerHTML='<option value="">كل الفروع</option>'+allBranches.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  }
+  const date=document.getElementById('catt-date').value;
+  const branch=document.getElementById('catt-branch').value;
+  const status=document.getElementById('catt-status-filter').value;
+
+  let query=sb.from('coach_attendance').select('*,coaches(name),branches(name)').order('session_date',{ascending:false}).order('created_at',{ascending:false});
+  if(date) query=query.eq('session_date',date);
+  if(branch) query=query.eq('branch_id',branch);
+  if(status) query=query.eq('status',status);
+  const{data}=await query;
+
+  const STATUS_STYLE={'حاضر':'b-green','غائب':'b-red','متأخر':'b-amber'};
+  const tb=document.getElementById('catt-table');
+  if(!data||!data.length){
+    tb.innerHTML='<tr><td colspan="6" class="empty-row">لا توجد سجلات — سجّل حضور المدربين من الزرار أعلاه</td></tr>';
+    return;
+  }
+  tb.innerHTML=data.map(r=>`<tr>
+    <td style="font-weight:600">${r.coaches?.name||'—'}</td>
+    <td style="font-size:13px;color:var(--text3)">${r.branches?.name||'—'}</td>
+    <td style="font-size:13px">${fmtDateWithDay(r.session_date)}</td>
+    <td><span class="badge ${STATUS_STYLE[r.status]||'b-gray'}">${r.status}</span></td>
+    <td style="font-size:12px;color:var(--text3)">${r.notes||'—'}</td>
+    <td><div style="display:flex;gap:4px;justify-content:flex-end">
+      <button class="icon-btn" onclick="openEditCoachAtt(${JSON.stringify(r).replace(/"/g,'&quot;')})" title="تعديل"><i class="ti ti-edit"></i></button>
+      <button class="icon-btn danger" onclick="deleteRecord('coach_attendance','${r.id}',loadCoachAtt)" title="حذف"><i class="ti ti-trash"></i></button>
+    </div></td>
+  </tr>`).join('');
+}
+
+async function saveCoachAtt(){
+  const coachId=document.getElementById('ca-coach').value;
+  const date=document.getElementById('ca-date').value;
+  if(!coachId||!date){toast('يرجى اختيار المدرب والتاريخ','error');return;}
+  if(!isValidYear(date)){toast('تاريخ غير صحيح','error');return;}
+  const{error}=await sb.from('coach_attendance').insert({
+    coach_id:coachId,
+    branch_id:document.getElementById('ca-branch').value||null,
+    session_date:date,
+    status:document.getElementById('ca-status').value,
+    notes:document.getElementById('ca-notes').value||null,
+  });
+  if(error){toast('خطأ: '+error.message,'error');return;}
+  toast('تم تسجيل الحضور ✓');
+  closeModal('coachAttModal');
+  document.getElementById('ca-notes').value='';
+  loadCoachAtt();
+}
+
+function openEditCoachAtt(r){
+  document.getElementById('eca-id').value=r.id;
+  document.getElementById('eca-date').value=r.session_date||'';setTimeout(()=>showDayName('eca-date','eca-day-name'),50);
+  document.getElementById('eca-status').value=r.status||'حاضر';
+  document.getElementById('eca-notes').value=r.notes||'';
+  // Populate coach select
+  loadCoachSelectGeneric('eca-coach').then(()=>{document.getElementById('eca-coach').value=r.coach_id||'';});
+  // Populate branch select
+  const brSel=document.getElementById('eca-branch');
+  brSel.innerHTML='<option value="">اختر...</option>'+allBranches.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  brSel.value=r.branch_id||'';
+  openModal('editCoachAttModal');
+}
+
+async function updateCoachAtt(){
+  const id=document.getElementById('eca-id').value;
+  const date=document.getElementById('eca-date').value;
+  if(!isValidYear(date)){toast('تاريخ غير صحيح','error');return;}
+  const{error}=await sb.from('coach_attendance').update({
+    coach_id:document.getElementById('eca-coach').value||null,
+    branch_id:document.getElementById('eca-branch').value||null,
+    session_date:date,
+    status:document.getElementById('eca-status').value,
+    notes:document.getElementById('eca-notes').value||null,
+  }).eq('id',id);
+  if(error){toast('خطأ: '+error.message,'error');return;}
+  toast('تم التعديل ✓');closeModal('editCoachAttModal');loadCoachAtt();
+}
+
+async function loadCoachSelectGeneric(selId){
+  const{data}=await sb.from('coaches').select('id,name').order('name');
+  const sel=document.getElementById(selId);
+  if(sel) sel.innerHTML='<option value="">اختر مدرب...</option>'+(data||[]).map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+// ---- COACH ATTENDANCE REPORT ----
+async function loadCoachAttReport(){
+  // Populate branch filter
+  const brSel=document.getElementById('catt-report-branch');
+  if(brSel&&allBranches.length&&brSel.options.length<=1){
+    brSel.innerHTML='<option value="">كل الفروع</option>'+allBranches.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  }
+  // Set default month/year to current
+  const now=new Date();
+  const monthSel=document.getElementById('catt-report-month');
+  const yearSel=document.getElementById('catt-report-year');
+  if(monthSel&&!monthSel.dataset.init){monthSel.value=now.getMonth()+1;monthSel.dataset.init='1';}
+  if(yearSel&&!yearSel.dataset.init){yearSel.value=now.getFullYear();yearSel.dataset.init='1';}
+
+  const month=monthSel.value;
+  const year=yearSel.value;
+  const branch=brSel.value;
+  const el=document.getElementById('catt-report-content');
+  el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+
+  const start=`${year}-${String(month).padStart(2,'0')}-01`;
+  const end=new Date(year,month,0).toISOString().split('T')[0];
+
+  let query=sb.from('coach_attendance').select('*,coaches(id,name),branches(name)').gte('session_date',start).lte('session_date',end);
+  if(branch) query=query.eq('branch_id',branch);
+  const{data}=await query;
+
+  if(!data||!data.length){
+    el.innerHTML=`<div style="text-align:center;padding:3rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);color:var(--text3)">
+      <i class="ti ti-calendar-off" style="font-size:40px;display:block;margin-bottom:12px"></i>
+      لا توجد سجلات في هذا الشهر
+    </div>`;
+    return;
+  }
+
+  // Group by coach
+  const coachMap={};
+  data.forEach(r=>{
+    const cid=r.coach_id;
+    if(!coachMap[cid]) coachMap[cid]={name:r.coaches?.name||'—',present:0,absent:0,late:0,total:0};
+    coachMap[cid].total++;
+    if(r.status==='حاضر') coachMap[cid].present++;
+    else if(r.status==='غائب') coachMap[cid].absent++;
+    else if(r.status==='متأخر') coachMap[cid].late++;
+  });
+
+  const coaches=Object.values(coachMap).sort((a,b)=>b.present-a.present);
+  const monthNames=['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
+  el.innerHTML=`
+    <div style="font-size:14px;font-weight:700;margin-bottom:1rem;color:var(--text3)">
+      تقرير شهر ${monthNames[Number(month)]} ${year} — ${data.length} سجل لـ ${coaches.length} مدرب
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+      ${coaches.map(c=>{
+        const pct=c.total?Math.round(c.present/c.total*100):0;
+        const color=pct>=80?'var(--accent-dk)':pct>=60?'var(--amber)':'var(--red-dk)';
+        return`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem;border-right:3px solid ${color}">
+          <div style="font-size:14px;font-weight:700;margin-bottom:10px">${c.name}</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;margin-bottom:10px">
+            <div style="background:var(--bg);border-radius:6px;padding:6px">
+              <div style="font-size:18px;font-weight:700;color:var(--accent-dk)">${c.present}</div>
+              <div style="font-size:10px;color:var(--text3)">حاضر</div>
+            </div>
+            <div style="background:var(--bg);border-radius:6px;padding:6px">
+              <div style="font-size:18px;font-weight:700;color:var(--red-dk)">${c.absent}</div>
+              <div style="font-size:10px;color:var(--text3)">غائب</div>
+            </div>
+            <div style="background:var(--bg);border-radius:6px;padding:6px">
+              <div style="font-size:18px;font-weight:700;color:var(--amber)">${c.late}</div>
+              <div style="font-size:10px;color:var(--text3)">متأخر</div>
+            </div>
+            <div style="background:var(--bg);border-radius:6px;padding:6px">
+              <div style="font-size:18px;font-weight:700;color:${color}">${pct}%</div>
+              <div style="font-size:10px;color:var(--text3)">نسبة</div>
+            </div>
+          </div>
+          <div style="background:var(--bg);border-radius:20px;height:6px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${color};border-radius:20px;transition:width .3s"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
 // ============================================================
 // LEAGUE SUBSCRIPTIONS (3 INSTALLMENTS)
 // ============================================================
+
+// ---- TOPBAR DATE ----
+function updateTopbarDate(){
+  const now=new Date();
+  const days=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const dayName=days[now.getDay()];
+  const day=String(now.getDate()).padStart(2,'0');
+  const month=String(now.getMonth()+1).padStart(2,'0');
+  const year=now.getFullYear();
+  const dateStr=`${dayName} ${day}-${month}-${year}`;
+  const el=document.getElementById('topbar-date-text');
+  if(el) el.textContent=dateStr;
+  const sel=document.getElementById('sidebar-date');
+  if(sel) sel.textContent=dateStr;
+}
+// Call immediately and also after DOM ready
+updateTopbarDate();
+
+
+// ---- QUICK DATE HELPERS ----
+function setQuickDate(inputId, offset, btn){
+  const d=new Date();
+  d.setDate(d.getDate()+offset);
+  const val=d.toISOString().split('T')[0];
+  document.getElementById(inputId).value=val;
+  btn.closest('.quick-date-btns').querySelectorAll('.quick-date-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function setQuickDateFilter(inputId, offset, btn){
+  setQuickDate(inputId, offset, btn);
+  // Trigger the filter reload
+  const input=document.getElementById(inputId);
+  input.dispatchEvent(new Event('change'));
+}
+
+// Auto-set today's date when modals open
+function autoSetToday(inputId){
+  const el=document.getElementById(inputId);
+  if(el&&!el.value) el.value=new Date().toISOString().split('T')[0];
+}
+
+// ---- DAY NAME FROM DATE ----
+const ARABIC_DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+function showDayName(inputId, displayId){
+  const val=document.getElementById(inputId)?.value;
+  const el=document.getElementById(displayId);
+  if(!el) return;
+  if(!val){el.textContent='';return;}
+  const d=new Date(val);
+  if(isNaN(d)){el.textContent='';return;}
+  const day=String(d.getDate()).padStart(2,'0');
+  const month=String(d.getMonth()+1).padStart(2,'0');
+  const year=d.getFullYear();
+  el.textContent=`${ARABIC_DAYS[d.getDay()]} ${day}-${month}-${year}`;
+}
+
+// ---- POSITIONS LIST ----
+const PLAYER_POSITIONS=[
+  'حارس مرمى','قلب دفاع أيمن','قلب دفاع أيسر','ظهير أيمن','ظهير أيسر',
+  'وسط دفاعي','وسط ميدان أيمن','وسط ميدان أيسر','وسط هجومي',
+  'جناح أيمن','جناح أيسر','مهاجم صريح'
+];
+const POS_ABBR={
+  'حارس مرمى':'GK','قلب دفاع أيمن':'CB-R','قلب دفاع أيسر':'CB-L',
+  'ظهير أيمن':'RB','ظهير أيسر':'LB','وسط دفاعي':'CDM',
+  'وسط ميدان أيمن':'CM-R','وسط ميدان أيسر':'CM-L','وسط هجومي':'CAM',
+  'جناح أيمن':'RW','جناح أيسر':'LW','مهاجم صريح':'ST'
+};
+function posOptionsHtml(selected=''){
+  return '<option value="">اختر المركز...</option>'+PLAYER_POSITIONS.map(p=>`<option value="${p}" ${p===selected?'selected':''}>${p} (${POS_ABBR[p]||''})</option>`).join('');
+}
 function switchSubTab(tab){
   document.getElementById('sub-monthly-tab').style.display=tab==='monthly'?'block':'none';
   document.getElementById('sub-league-tab').style.display=tab==='league'?'block':'none';
@@ -3461,7 +3844,7 @@ async function updateSub(){
 // -- ATTENDANCE --
 function openEditAtt(a){
   document.getElementById('ea-id').value=a.id;
-  document.getElementById('ea-date').value=a.session_date||'';
+  document.getElementById('ea-date').value=a.session_date||'';setTimeout(()=>showDayName('ea-date','ea-day-name'),50);
   document.getElementById('ea-status').value=a.status||'حاضر';
   document.getElementById('ea-note').value=a.coach_note||'';
   openModal('editAttModal');
@@ -4393,6 +4776,68 @@ initAuth();
     <div class="modal-foot"><button class="btn" onclick="closeModal('matchRatingModal')">إلغاء</button><button class="btn btn-primary" onclick="saveMatchRating()"><i class="ti ti-check"></i> حفظ التقييم</button></div>
   </div>
 </div>
+
+<!-- COACH ATTENDANCE MODAL -->
+<div id="coachAttModal" class="modal-overlay">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head"><span class="modal-title"><i class="ti ti-clipboard-check"></i> تسجيل حضور مدرب</span><button class="icon-btn" onclick="closeModal('coachAttModal')"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body"><div class="form-grid">
+      <div class="field full"><label>المدرب *</label><select id="ca-coach"><option value="">اختر مدرب...</option></select></div>
+      <div class="field"><label>الفرع</label><select id="ca-branch"><option value="">اختر فرع...</option></select></div>
+      <div class="field full">
+        <label>التاريخ *</label>
+        <div class="quick-date-btns">
+          <button type="button" class="quick-date-btn" onclick="setQuickDate('ca-date', 0, this);showDayName('ca-date','ca-day-name')">اليوم</button>
+        </div>
+        <input id="ca-date" type="date" oninput="showDayName('ca-date','ca-day-name')">
+        <div id="ca-day-name" class="day-name-display"></div>
+      </div>
+      <div class="field"><label>الحالة</label>
+        <select id="ca-status">
+          <option value="حاضر">حاضر ✅</option>
+          <option value="غائب">غائب ❌</option>
+          <option value="متأخر">متأخر ⚠️</option>
+        </select>
+      </div>
+      <div class="field full"><label>ملاحظات</label><textarea id="ca-notes" placeholder="..."></textarea></div>
+    </div></div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('coachAttModal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveCoachAtt()"><i class="ti ti-check"></i> حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT COACH ATTENDANCE MODAL -->
+<div id="editCoachAttModal" class="modal-overlay">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head"><span class="modal-title"><i class="ti ti-edit"></i> تعديل الحضور</span><button class="icon-btn" onclick="closeModal('editCoachAttModal')"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body"><div class="form-grid">
+      <input type="hidden" id="eca-id">
+      <div class="field full"><label>المدرب</label><select id="eca-coach"><option value="">اختر...</option></select></div>
+      <div class="field"><label>الفرع</label><select id="eca-branch"><option value="">اختر...</option></select></div>
+      <div class="field full"><label>التاريخ</label>
+        <div class="quick-date-btns">
+          <button type="button" class="quick-date-btn" onclick="setQuickDate('eca-date', 0, this);showDayName('eca-date','eca-day-name')">اليوم</button>
+        </div>
+        <input id="eca-date" type="date" oninput="showDayName('eca-date','eca-day-name')">
+        <div id="eca-day-name" class="day-name-display"></div>
+      </div>
+      <div class="field"><label>الحالة</label>
+        <select id="eca-status">
+          <option value="حاضر">حاضر ✅</option>
+          <option value="غائب">غائب ❌</option>
+          <option value="متأخر">متأخر ⚠️</option>
+        </select>
+      </div>
+      <div class="field full"><label>ملاحظات</label><textarea id="eca-notes"></textarea></div>
+    </div></div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('editCoachAttModal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="updateCoachAtt()"><i class="ti ti-check"></i> حفظ</button>
+    </div>
+  </div>
+</div>
 <!-- TEAM MODAL -->
 <div id="teamModal" class="modal-overlay">
   <div class="modal">
@@ -4441,7 +4886,19 @@ initAuth();
       <div class="field full"><label>الاسم *</label><input id="exp-name" type="text" placeholder="اسم اللاعب"></div>
       <div class="field"><label>النادي</label><input id="exp-club" type="text" placeholder="اسم النادي"></div>
       <div class="field"><label>الهاتف</label><input id="exp-phone" type="text" placeholder="010xxxxxxxx"></div>
-      <div class="field"><label>المركز</label><select id="exp-pos"><option value="">اختر...</option><option>حارس مرمى</option><option>دفاع</option><option>وسط</option><option>هجوم</option></select></div>
+      <div class="field"><label>المركز</label><select id="exp-pos"><option value="">اختر...</option>
+<option value="حارس مرمى">حارس مرمى (GK)</option>
+<option value="قلب دفاع أيمن">قلب دفاع أيمن (CB-R)</option>
+<option value="قلب دفاع أيسر">قلب دفاع أيسر (CB-L)</option>
+<option value="ظهير أيمن">ظهير أيمن (RB)</option>
+<option value="ظهير أيسر">ظهير أيسر (LB)</option>
+<option value="وسط دفاعي">وسط دفاعي (CDM)</option>
+<option value="وسط ميدان أيمن">وسط ميدان أيمن (CM-R)</option>
+<option value="وسط ميدان أيسر">وسط ميدان أيسر (CM-L)</option>
+<option value="وسط هجومي">وسط هجومي (CAM)</option>
+<option value="جناح أيمن">جناح أيمن (RW)</option>
+<option value="جناح أيسر">جناح أيسر (LW)</option>
+<option value="مهاجم صريح">مهاجم صريح (ST)</option></select></div>
       <div class="field"><label>تاريخ الميلاد</label><input id="exp-bdate" type="date"></div>
       <div class="field full"><label>ملاحظات</label><textarea id="exp-notes" placeholder="..."></textarea></div>
     </div></div>
@@ -4482,7 +4939,19 @@ initAuth();
       <div style="grid-column:1/-1;border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
         <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:10px;display:flex;align-items:center;gap:6px"><i class="ti ti-heart-rate-monitor"></i> البيانات الرياضية والصحية</div>
         <div class="form-grid">
-          <div class="field"><label>المركز</label><select id="ep-position"><option value="">اختر...</option><option>حارس مرمى</option><option>دفاع</option><option>وسط</option><option>هجوم</option></select></div>
+          <div class="field"><label>المركز</label><select id="ep-position"><option value="">اختر...</option>
+<option value="حارس مرمى">حارس مرمى (GK)</option>
+<option value="قلب دفاع أيمن">قلب دفاع أيمن (CB-R)</option>
+<option value="قلب دفاع أيسر">قلب دفاع أيسر (CB-L)</option>
+<option value="ظهير أيمن">ظهير أيمن (RB)</option>
+<option value="ظهير أيسر">ظهير أيسر (LB)</option>
+<option value="وسط دفاعي">وسط دفاعي (CDM)</option>
+<option value="وسط ميدان أيمن">وسط ميدان أيمن (CM-R)</option>
+<option value="وسط ميدان أيسر">وسط ميدان أيسر (CM-L)</option>
+<option value="وسط هجومي">وسط هجومي (CAM)</option>
+<option value="جناح أيمن">جناح أيمن (RW)</option>
+<option value="جناح أيسر">جناح أيسر (LW)</option>
+<option value="مهاجم صريح">مهاجم صريح (ST)</option></select></div>
           <div class="field"><label>رقم القميص</label><input id="ep-jersey" type="number" min="1" max="99"></div>
           <div class="field"><label>الوزن (كجم)</label><input id="ep-weight" type="number" step="0.1" placeholder="60"></div>
           <div class="field"><label>الطول (سم)</label><input id="ep-height" type="number" placeholder="170"></div>
@@ -4535,7 +5004,13 @@ initAuth();
     <div class="modal-head"><span class="modal-title"><i class="ti ti-edit"></i> تعديل سجل الحضور</span><button class="icon-btn" onclick="closeModal('editAttModal')"><i class="ti ti-x"></i></button></div>
     <div class="modal-body"><div class="form-grid">
       <input type="hidden" id="ea-id">
-      <div class="field"><label>التاريخ</label><input id="ea-date" type="date"></div>
+      <div class="field full"><label>التاريخ</label>
+        <div class="quick-date-btns">
+          <button type="button" class="quick-date-btn" onclick="setQuickDate('ea-date', 0, this);showDayName('ea-date','ea-day-name')">اليوم</button>
+        </div>
+        <input id="ea-date" type="date" oninput="showDayName('ea-date','ea-day-name')">
+        <div id="ea-day-name" class="day-name-display"></div>
+      </div>
       <div class="field"><label>الحالة *</label><select id="ea-status"><option value="حاضر">حاضر</option><option value="غائب">غائب</option><option value="متأخر">متأخر</option></select></div>
       <div class="field full"><label>ملاحظة المدرب</label><input id="ea-note" type="text"></div>
     </div></div>
@@ -4655,4 +5130,3 @@ initAuth();
 </div>
 </body>
 </html>
-
