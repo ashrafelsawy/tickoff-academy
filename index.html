@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -617,6 +617,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:10px;color:rgba(255,255,255,.2);background:rgba(255,255,255,.05);padding:2px 8px;border-radius:10px">v1.2.4 — 24/06/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -1122,9 +1123,9 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
     </div>
 
     <!-- PARENT VIEW -->
-    <div id="screen-parent_view" class="screen">
+    <div id="screen-parent_view" class="screen" style="padding-top:0">
       <div class="filter-bar">
-        <div class="search-wrap"><i class="ti ti-search"></i><input type="text" placeholder="ابحث عن لاعب..." id="pv-search" oninput="searchParentPlayer()"></div>
+        <div class="search-wrap" style="max-width:400px"><i class="ti ti-search"></i><input type="text" placeholder="ابحث عن اسم اللاعب..." id="pv-search" oninput="searchParentPlayer()"></div>
       </div>
       <div id="parentViewContent">
         <div style="text-align:center;padding:3rem;color:var(--text3)">
@@ -1297,7 +1298,13 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
     <div class="modal-body"><div class="form-grid">
       <div class="field"><label>الاسم الأول *</label><input id="p-fname" type="text" placeholder="أحمد"></div>
       <div class="field"><label>اسم العائلة *</label><input id="p-lname" type="text" placeholder="محمد"></div>
-      <div class="field"><label>تاريخ الميلاد</label><input id="p-bdate" type="date"></div>
+      <div class="field full"><label>تاريخ الميلاد</label>
+        <div style="display:flex;gap:6px">
+          <select id="p-bday" style="width:70px"><option value="">يوم</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select>
+          <select id="p-bmonth" style="flex:1"><option value="">الشهر</option><option value="01">يناير</option><option value="02">فبراير</option><option value="03">مارس</option><option value="04">أبريل</option><option value="05">مايو</option><option value="06">يونيو</option><option value="07">يوليو</option><option value="08">أغسطس</option><option value="09">سبتمبر</option><option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option></select>
+          <select id="p-byear" style="width:90px"><option value="">السنة</option><option value="2020">2020</option><option value="2019">2019</option><option value="2018">2018</option><option value="2017">2017</option><option value="2016">2016</option><option value="2015">2015</option><option value="2014">2014</option><option value="2013">2013</option><option value="2012">2012</option><option value="2011">2011</option><option value="2010">2010</option><option value="2009">2009</option><option value="2008">2008</option><option value="2007">2007</option><option value="2006">2006</option><option value="2005">2005</option></select>
+        </div>
+      </div>
       <div class="field"><label>المجموعة العمرية *</label><select id="p-group"><option value="">اختر...</option><option>تحت 10</option><option>تحت 12</option><option>تحت 14</option><option>تحت 16</option><option>تحت 18</option></select></div>
       <div class="field"><label>اسم ولي الأمر</label><input id="p-parent" type="text" placeholder="محمد علي"></div>
       <div class="field"><label>هاتف ولي الأمر</label><input id="p-phone" type="text" placeholder="010xxxxxxxx"></div>
@@ -1607,7 +1614,7 @@ async function savePlayer(){
   const fn=document.getElementById('p-fname').value.trim(),ln=document.getElementById('p-lname').value.trim(),g=document.getElementById('p-group').value;
   if(!fn||!ln||!g){toast('يرجى ملء الحقول المطلوبة *','error');return;}
   const btn=document.getElementById('savePlayerBtn');btn.disabled=true;btn.innerHTML='<div class="spinner"></div>';
-  const{error}=await sb.from('players').insert({first_name:fn,last_name:ln,birth_date:document.getElementById('p-bdate').value||null,group_age:g,parent_name:document.getElementById('p-parent').value||null,parent_phone:document.getElementById('p-phone').value||null,coach_id:document.getElementById('p-coach').value||null,status:document.getElementById('p-status').value,notes:document.getElementById('p-notes').value||null});
+  const{error}=await sb.from('players').insert({first_name:fn,last_name:ln,birth_date:(()=>{const d=document.getElementById('p-bday').value,m=document.getElementById('p-bmonth').value,y=document.getElementById('p-byear').value;return(d&&m&&y)?`${y}-${m}-${d}`:null;})(),group_age:g,parent_name:document.getElementById('p-parent').value||null,parent_phone:document.getElementById('p-phone').value||null,coach_id:document.getElementById('p-coach').value||null,status:document.getElementById('p-status').value,notes:document.getElementById('p-notes').value||null});
   btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> حفظ اللاعب';
   if(error){toast('خطأ: '+error.message,'error');return;}
   toast('تم حفظ اللاعب بنجاح ✓');closeModal('playerModal');
@@ -2428,6 +2435,18 @@ const POS_ABBR={
 };
 function posOptionsHtml(selected=''){
   return '<option value="">اختر المركز...</option>'+PLAYER_POSITIONS.map(p=>`<option value="${p}" ${p===selected?'selected':''}>${p} (${POS_ABBR[p]||''})</option>`).join('');
+}
+
+// Remember last birth year for quick entry
+document.addEventListener('change', function(e){
+  if(e.target.id==='p-byear'&&e.target.value){
+    localStorage.setItem('lastBirthYear', e.target.value);
+  }
+});
+function applyLastYear(){
+  const lastYear=localStorage.getItem('lastBirthYear');
+  const sel=document.getElementById('p-byear');
+  if(lastYear&&sel) sel.value=lastYear;
 }
 function switchSubTab(tab){
   document.getElementById('sub-monthly-tab').style.display=tab==='monthly'?'block':'none';
@@ -3752,7 +3771,7 @@ function openEditPlayer(p){
   document.getElementById('ep-id').value=p.id;
   document.getElementById('ep-fname').value=p.first_name||'';
   document.getElementById('ep-lname').value=p.last_name||'';
-  document.getElementById('ep-bdate').value=p.birth_date||'';
+  if(p.birth_date){const parts=p.birth_date.split('-');document.getElementById('ep-byear').value=parts[0]||'';document.getElementById('ep-bmonth').value=parts[1]||'';document.getElementById('ep-bday').value=parts[2]||'';}else{document.getElementById('ep-byear').value='';document.getElementById('ep-bmonth').value='';document.getElementById('ep-bday').value='';}
   document.getElementById('ep-group').value=p.group_age||'';
   document.getElementById('ep-parent').value=p.parent_name||'';
   document.getElementById('ep-phone').value=p.parent_phone||'';
@@ -3781,7 +3800,7 @@ async function updatePlayer(){
   if(!fn||!ln){toast('يرجى ملء الحقول المطلوبة','error');return;}
   const{error}=await sb.from('players').update({
     first_name:fn,last_name:ln,
-    birth_date:document.getElementById('ep-bdate').value||null,
+    birth_date:(()=>{const d=document.getElementById('ep-bday').value,m=document.getElementById('ep-bmonth').value,y=document.getElementById('ep-byear').value;return(d&&m&&y)?`${y}-${m}-${d}`:null;})(),
     group_age:document.getElementById('ep-group').value,
     parent_name:document.getElementById('ep-parent').value||null,
     parent_phone:document.getElementById('ep-phone').value||null,
@@ -4313,7 +4332,8 @@ async function searchParentPlayer(){
 async function loadParentView(playerId, playerName){
   const el=document.getElementById('parentViewContent');
   el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
-  const[{data:evals},{data:notes},{data:attRecs},{data:subs}]=await Promise.all([
+  const[{data:p},{data:evals},{data:notes},{data:attRecs},{data:subs}]=await Promise.all([
+    sb.from('players').select('*,branches(name)').eq('id',playerId).single(),
     sb.from('player_evaluations').select('*').eq('player_id',playerId).order('eval_date',{ascending:false}).limit(3),
     sb.from('coach_notes').select('*').eq('player_id',playerId).order('created_at',{ascending:false}),
     sb.from('attendance').select('*').eq('player_id',playerId).order('session_date',{ascending:false}).limit(10),
@@ -4325,11 +4345,25 @@ async function loadParentView(playerId, playerName){
   const eval1=evals?.[0];
   const sub=subs?.[0];
   el.innerHTML=`
-    <div class="parent-header">
-      <div class="parent-avatar">${initials(playerName)}</div>
-      <div>
-        <div class="parent-name">${playerName}</div>
-        <div class="parent-sub">تقرير ولي الأمر — ${new Date().toLocaleDateString('ar-EG')}</div>
+    <!-- WELCOME BANNER -->
+    <div style="background:linear-gradient(135deg,#0D2A12,#1A5C2A,#2D8A3E);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1.25rem;position:relative">
+      <div style="position:absolute;left:-20px;top:-20px;width:120px;height:120px;border-radius:50%;background:rgba(109,200,42,.08)"></div>
+      <div style="position:absolute;left:60px;bottom:-30px;width:80px;height:80px;border-radius:50%;background:rgba(109,200,42,.06)"></div>
+      <div style="width:70px;height:70px;border-radius:50%;border:3px solid var(--accent);overflow:hidden;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:var(--accent);flex-shrink:0;z-index:1">
+        ${p?.photo_url?`<img src="${p.photo_url}" style="width:100%;height:100%;object-fit:cover">`:`${initials(playerName)}`}
+      </div>
+      <div style="z-index:1;flex:1">
+        <div style="font-size:11px;color:rgba(255,255,255,.6);margin-bottom:4px;letter-spacing:.05em">🏆 TICK OFF FOOTBALL ACADEMY</div>
+        <div style="font-size:20px;font-weight:800;color:#fff;margin-bottom:4px">مرحباً، ${playerName}</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          ${p?.group_age?`<span style="font-size:12px;color:var(--accent);font-weight:600"><i class="ti ti-users"></i> ${p.group_age}</span>`:''}
+          ${p?.position?`<span style="font-size:12px;color:rgba(255,255,255,.7)"><i class="ti ti-ball-football"></i> ${p.position}</span>`:''}
+          ${p?.branches?.name?`<span style="font-size:12px;color:rgba(255,255,255,.7)"><i class="ti ti-building"></i> ${p.branches.name}</span>`:''}
+        </div>
+      </div>
+      <div style="text-align:center;z-index:1;background:rgba(0,0,0,.2);border-radius:var(--radius-lg);padding:.75rem 1rem">
+        <div style="font-size:28px;font-weight:800;color:${attPct>=80?'#6DC82A':attPct>=60?'#F5C518':'#FF6B6B'}">${attPct}%</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.6)">نسبة الحضور</div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.25rem">
@@ -4938,7 +4972,13 @@ initAuth();
       <input type="hidden" id="ep-id">
       <div class="field"><label>الاسم الأول *</label><input id="ep-fname" type="text"></div>
       <div class="field"><label>اسم العائلة *</label><input id="ep-lname" type="text"></div>
-      <div class="field"><label>تاريخ الميلاد</label><input id="ep-bdate" type="date"></div>
+      <div class="field full"><label>تاريخ الميلاد</label>
+        <div style="display:flex;gap:6px">
+          <select id="ep-bday" style="width:70px"><option value="">يوم</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select>
+          <select id="ep-bmonth" style="flex:1"><option value="">الشهر</option><option value="01">يناير</option><option value="02">فبراير</option><option value="03">مارس</option><option value="04">أبريل</option><option value="05">مايو</option><option value="06">يونيو</option><option value="07">يوليو</option><option value="08">أغسطس</option><option value="09">سبتمبر</option><option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option></select>
+          <select id="ep-byear" style="width:90px"><option value="">السنة</option><option value="2020">2020</option><option value="2019">2019</option><option value="2018">2018</option><option value="2017">2017</option><option value="2016">2016</option><option value="2015">2015</option><option value="2014">2014</option><option value="2013">2013</option><option value="2012">2012</option><option value="2011">2011</option><option value="2010">2010</option><option value="2009">2009</option><option value="2008">2008</option><option value="2007">2007</option><option value="2006">2006</option><option value="2005">2005</option></select>
+        </div>
+      </div>
       <div class="field"><label>المجموعة *</label><select id="ep-group"><option value="">اختر...</option><option>تحت 10</option><option>تحت 12</option><option>تحت 14</option><option>تحت 16</option><option>تحت 18</option></select></div>
       <div class="field"><label>اسم ولي الأمر</label><input id="ep-parent" type="text"></div>
       <div class="field"><label>هاتف ولي الأمر</label><input id="ep-phone" type="text"></div>
