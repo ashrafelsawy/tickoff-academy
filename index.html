@@ -154,8 +154,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   box-shadow:0 4px 16px rgba(109,200,42,.4);
   overflow:hidden;
 }
-.logo-name{font-size:17px;font-weight:800;color:#fff;line-height:1.2;letter-spacing:.5px}
-.logo-sub{font-size:10px;color:var(--accent);margin-top:3px;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+.logo-name{font-size:16px;font-weight:800;color:#fff;line-height:1.2;letter-spacing:.5px}
+.logo-sub{font-size:11px;color:var(--accent);margin-top:3px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;opacity:.9}
 .nav{flex:1;padding:.75rem 0}
 .nav-section{margin-bottom:.25rem}
 .nav-label{font-size:10px;color:rgba(255,255,255,.3);padding:8px 1rem 4px;letter-spacing:.08em;text-transform:uppercase}
@@ -564,7 +564,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
   <div class="logo">
     <div class="logo-badge"><i class="ti ti-ball-football"></i></div>
     <div class="logo-name">TICK OFF</div>
-    <div class="logo-sub">Football Academy</div>
+    <div class="logo-sub">⚽ Football Academy</div>
   </div>
   <nav class="nav">
     <div class="nav-section">
@@ -720,6 +720,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
         <div id="catt-register-tab">
           <div class="filter-bar">
             <input type="date" id="catt-date" onchange="loadCoachAtt()" style="width:160px">
+            <select id="catt-coach-filter" onchange="loadCoachAtt()" style="width:150px"><option value="">كل المدربين</option></select>
             <select id="catt-branch" onchange="loadCoachAtt()" style="width:150px"><option value="">كل الفروع</option></select>
             <select id="catt-status-filter" onchange="loadCoachAtt()" style="width:130px">
               <option value="">كل الحالات</option>
@@ -2178,14 +2179,22 @@ async function loadCoachAtt(){
   if(brSel&&allBranches.length&&brSel.options.length<=1){
     brSel.innerHTML='<option value="">كل الفروع</option>'+allBranches.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
   }
+  // Populate coach filter
+  const coachSel=document.getElementById('catt-coach-filter');
+  if(coachSel&&coachSel.options.length<=1){
+    const{data:coaches}=await sb.from('coaches').select('id,name').order('name');
+    coachSel.innerHTML='<option value="">كل المدربين</option>'+(coaches||[]).map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  }
   const date=document.getElementById('catt-date').value;
   const branch=document.getElementById('catt-branch').value;
   const status=document.getElementById('catt-status-filter').value;
+  const coachId=document.getElementById('catt-coach-filter').value;
 
   let query=sb.from('coach_attendance').select('*,coaches(name),branches(name)').order('session_date',{ascending:false}).order('created_at',{ascending:false});
   if(date) query=query.eq('session_date',date);
   if(branch) query=query.eq('branch_id',branch);
   if(status) query=query.eq('status',status);
+  if(coachId) query=query.eq('coach_id',coachId);
   const{data}=await query;
 
   const STATUS_STYLE={'حاضر':'b-green','غائب':'b-red','متأخر':'b-amber'};
@@ -4397,7 +4406,7 @@ async function loadAcademySettings(){
   }
   // Load academy name
   if(data.name){
-    document.querySelector('.logo-name').textContent=data.name.split(' ')[0]||'TICK OFF';
+    document.querySelector('.logo-name').textContent=data.name||'TICK OFF';
     document.getElementById('set-name').value=data.name;
   }
   if(data.phone) document.getElementById('set-phone').value=data.phone;
@@ -4508,7 +4517,7 @@ async function saveSettings(){
   if(error){toast('خطأ: '+error.message,'error');return;}
   // Update sidebar name
   const name=document.getElementById('set-name').value;
-  document.querySelector('.logo-name').textContent=name.split(' ')[0]||'TICK OFF';
+  document.querySelector('.logo-name').textContent=name||'TICK OFF';
   toast('تم حفظ الإعدادات ✓');
 }
 
@@ -5130,4 +5139,3 @@ initAuth();
 </div>
 </body>
 </html>
-
