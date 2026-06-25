@@ -845,7 +845,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
     <!-- SCHEDULE -->
     <div id="screen-schedule" class="screen">
       <div class="table-wrap">
-        <div class="card-head"><span class="card-title"><i class="ti ti-calendar"></i> جدول التدريبات</span><button class="btn btn-primary btn-sm" onclick="openModal('sessionModal');loadCoachSelect('sc-coach')"><i class="ti ti-plus"></i> جلسة جديدة</button></div>
+        <div class="card-head"><span class="card-title"><i class="ti ti-calendar"></i> جدول التدريبات</span><button class="btn btn-primary btn-sm" onclick="openModal('sessionModal');loadCoachSelect('sc-coach');autoSetToday('sc-date');setTimeout(()=>{showDayName('sc-date','sc-day-name');const brSel=document.getElementById('sc-branch');if(brSel)brSel.innerHTML='<option value="">اختر فرع...</option>'+allBranches.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');},100)"><i class="ti ti-plus"></i> جلسة جديدة</button></div>
         <table><thead><tr><th>اليوم</th><th>الوقت</th><th>المجموعة</th><th>المدرب</th><th>الملعب</th><th>النوع</th><th></th></tr></thead>
         <tbody id="sched-table"><tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr></tbody></table>
       </div>
@@ -1415,7 +1415,13 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
     <div class="modal-head"><span class="modal-title"><i class="ti ti-calendar-plus"></i>إضافة جلسة</span><button class="icon-btn" onclick="closeModal('sessionModal')"><i class="ti ti-x"></i></button></div>
     <div class="modal-body"><div class="form-grid">
       <div class="field"><label>اليوم</label><select id="sc-day"><option>الأحد</option><option>الاثنين</option><option>الثلاثاء</option><option>الأربعاء</option><option>الخميس</option><option>الجمعة</option><option>السبت</option></select></div>
+      <div class="field"><label>التاريخ</label>
+        <div class="quick-date-btns"><button type="button" class="quick-date-btn" onclick="setQuickDate('sc-date',0,this);showDayName('sc-date','sc-day-name')">اليوم</button></div>
+        <input id="sc-date" type="date" oninput="showDayName('sc-date','sc-day-name')">
+        <div id="sc-day-name" class="day-name-display"></div>
+      </div>
       <div class="field"><label>النوع</label><select id="sc-type"><option value="تدريب">تدريب</option><option value="مباراة">مباراة</option><option value="فعالية">فعالية</option></select></div>
+      <div class="field"><label>الفرع</label><select id="sc-branch"><option value="">اختر فرع...</option></select></div>
       <div class="field"><label>وقت البداية</label><input id="sc-start" type="time" value="19:00"></div>
       <div class="field"><label>وقت النهاية</label><input id="sc-end" type="time" value="21:00"></div>
       <div class="field"><label>المجموعة</label><select id="sc-group"><option>تحت 10</option><option>تحت 12</option><option>تحت 14</option><option>تحت 16</option><option>تحت 18</option></select></div>
@@ -1436,7 +1442,7 @@ const PAGES={
   players:{title:'اللاعبون',sub:'إدارة اللاعبين المسجلين',actions:'<button class="btn btn-primary" onclick="openModal(\'playerModal\');loadCoachSelect()"><i class="ti ti-plus"></i> لاعب جديد</button>'},
   coaches:{title:'المدربون',sub:'إدارة المدربين',actions:'<button class="btn btn-primary" onclick="openModal(\'coachModal\')"><i class="ti ti-plus"></i> مدرب جديد</button>'},
   subscriptions:{title:'الاشتراكات',sub:'إدارة المدفوعات',actions:'<button class="btn btn-primary" onclick="openModal(\'subModal\');loadPlayerSelect(\'s-player\')"><i class="ti ti-plus"></i> تسجيل دفعة</button>'},
-  attendance:{title:'الحضور',sub:'سجل الحضور والغياب',actions:'<button class="btn btn-primary" onclick="openModal(\'attModal\');loadPlayerSelect(\'a-player\')"><i class="ti ti-plus"></i> تسجيل حضور</button>'},
+  attendance:{title:'الحضور',sub:'سجل الحضور والغياب',actions:'<button class="btn btn-primary" onclick="openModal(\'attModal\');loadPlayerSelect(\'a-player\');autoSetToday(\'a-date\');setTimeout(()=>showDayName(\'a-date\',\'a-day-name\'),50)"><i class="ti ti-plus"></i> تسجيل حضور</button>'},
   expenses:{title:'المصروفات',sub:'تتبع مصروفات الأكاديمية',actions:'<button class="btn btn-primary" onclick="openModal(\'expModal\')"><i class="ti ti-plus"></i> مصروف جديد</button>'},
   schedule:{title:'الجدول',sub:'جدول التدريبات والمباريات',actions:'<button class="btn btn-primary" onclick="openModal(\'sessionModal\');loadCoachSelect(\'sc-coach\')"><i class="ti ti-plus"></i> جلسة جديدة</button>'},
   reports:{title:'التقارير',sub:'ملخص الأداء العام',actions:''},
@@ -1613,12 +1619,33 @@ async function loadPlayers(p){if(p)plPage=p;
 async function savePlayer(){
   const fn=document.getElementById('p-fname').value.trim(),ln=document.getElementById('p-lname').value.trim(),g=document.getElementById('p-group').value;
   if(!fn||!ln||!g){toast('يرجى ملء الحقول المطلوبة *','error');return;}
+
+  // Build birth date
+  const bd=(()=>{const d=document.getElementById('p-bday').value,m=document.getElementById('p-bmonth').value,y=document.getElementById('p-byear').value;return(d&&m&&y)?`${y}-${m}-${d}`:null;})();
+
+  // Check for duplicate - same name + birth date
+  if(bd){
+    const{data:existing}=await sb.from('players').select('id,first_name,last_name,birth_date,group_age').eq('first_name',fn).eq('last_name',ln).eq('birth_date',bd);
+    if(existing&&existing.length>0){
+      const dup=existing[0];
+      const confirmAdd=confirm(`⚠️ تحذير: "${fn} ${ln}" مولود في ${fmtDate(bd)} موجود بالفعل في مجموعة ${dup.group_age||'—'}!\n\nهل تريد الإضافة على أي حال؟`);
+      if(!confirmAdd) return;
+    }
+  } else {
+    // Check by name only if no birth date
+    const{data:existing}=await sb.from('players').select('id,first_name,last_name').eq('first_name',fn).eq('last_name',ln);
+    if(existing&&existing.length>0){
+      const confirmAdd=confirm(`⚠️ تحذير: لاعب باسم "${fn} ${ln}" موجود بالفعل!\n\nهل تريد الإضافة على أي حال؟`);
+      if(!confirmAdd) return;
+    }
+  }
+
   const btn=document.getElementById('savePlayerBtn');btn.disabled=true;btn.innerHTML='<div class="spinner"></div>';
-  const{error}=await sb.from('players').insert({first_name:fn,last_name:ln,birth_date:(()=>{const d=document.getElementById('p-bday').value,m=document.getElementById('p-bmonth').value,y=document.getElementById('p-byear').value;return(d&&m&&y)?`${y}-${m}-${d}`:null;})(),group_age:g,parent_name:document.getElementById('p-parent').value||null,parent_phone:document.getElementById('p-phone').value||null,coach_id:document.getElementById('p-coach').value||null,status:document.getElementById('p-status').value,notes:document.getElementById('p-notes').value||null});
+  const{error}=await sb.from('players').insert({first_name:fn,last_name:ln,birth_date:bd,group_age:g,parent_name:document.getElementById('p-parent').value||null,parent_phone:document.getElementById('p-phone').value||null,coach_id:document.getElementById('p-coach').value||null,status:document.getElementById('p-status').value,notes:document.getElementById('p-notes').value||null});
   btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> حفظ اللاعب';
   if(error){toast('خطأ: '+error.message,'error');return;}
   toast('تم حفظ اللاعب بنجاح ✓');closeModal('playerModal');
-  ['p-fname','p-lname','p-bdate','p-parent','p-phone','p-notes'].forEach(id=>document.getElementById(id).value='');
+  ['p-fname','p-lname','p-parent','p-phone','p-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   loadPlayers();loadDashboard();
 }
 
@@ -1771,7 +1798,17 @@ async function loadSchedule(){
     <td><div style="display:flex;gap:4px;justify-content:flex-end"><button class="icon-btn" onclick="openEditSchedule(_get('${_set(s.id,s)}'))"  title="تعديل"><i class="ti ti-edit"></i></button><button class="icon-btn danger" onclick="deleteRecord('schedule','${s.id}',loadSchedule)" title="حذف"><i class="ti ti-trash"></i></button></div></td></tr>`).join('');
 }
 async function saveSession(){
-  const{error}=await sb.from('schedule').insert({day_of_week:document.getElementById('sc-day').value,session_type:document.getElementById('sc-type').value,start_time:document.getElementById('sc-start').value,end_time:document.getElementById('sc-end').value,group_age:document.getElementById('sc-group').value,coach_id:document.getElementById('sc-coach').value||null,venue:document.getElementById('sc-venue').value||null});
+  const{error}=await sb.from('schedule').insert({
+    day_of_week:document.getElementById('sc-day').value,
+    session_date:document.getElementById('sc-date').value||null,
+    session_type:document.getElementById('sc-type').value,
+    branch_id:document.getElementById('sc-branch').value||null,
+    start_time:document.getElementById('sc-start').value,
+    end_time:document.getElementById('sc-end').value,
+    group_age:document.getElementById('sc-group').value,
+    coach_id:document.getElementById('sc-coach').value||null,
+    venue:document.getElementById('sc-venue').value||null
+  });
   if(error){toast('خطأ: '+error.message,'error');return;}
   toast('تم حفظ الجلسة بنجاح ✓');closeModal('sessionModal');loadSchedule();
 }
@@ -5179,4 +5216,3 @@ initAuth();
 </div>
 </body>
 </html>
-
