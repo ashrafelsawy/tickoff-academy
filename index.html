@@ -556,6 +556,12 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
 
 .date-with-day{display:flex;flex-direction:column;gap:4px}
 .day-name-display{font-size:12px;font-weight:600;color:var(--primary);padding:3px 10px;background:var(--primary-lt);border-radius:20px;display:inline-block;min-height:20px}
+
+.squad-btn{padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border);border-radius:6px;background:var(--bg);cursor:pointer;color:var(--text3);transition:all .15s}
+.squad-btn:hover{border-color:var(--primary)}
+.squad-btn.active-starter{background:var(--accent);border-color:var(--accent);color:#fff}
+.squad-btn.active-sub{background:var(--amber);border-color:var(--amber);color:#fff}
+.squad-btn.active-excluded{background:var(--text3);border-color:var(--text3);color:#fff}
 </style>
 </head>
 <body>
@@ -617,7 +623,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:10px;color:rgba(255,255,255,.2);background:rgba(255,255,255,.05);padding:2px 8px;border-radius:10px">v1.2.4 — 24/06/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:10px;color:rgba(255,255,255,.2);background:rgba(255,255,255,.05);padding:2px 8px;border-radius:10px">v1.4.2 — 25/06/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -661,6 +667,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
         <div class="kpi kpi-net"><div class="kpi-label"><i class="ti ti-scale"></i> صافي الشهر</div><div class="kpi-value" id="kpi-net">—</div><div class="kpi-delta" id="kpi-net-sub"></div></div>
       </div>
       <div id="dash-player-month" style="margin-bottom:1rem"></div>
+      <div id="dash-birthdays" style="margin-bottom:1rem"></div>
       <div style="display:grid;grid-template-columns:1fr 280px;gap:14px">
         <div class="table-wrap">
           <div class="card-head"><span class="card-title"><i class="ti ti-users"></i> آخر اللاعبين المسجلين</span><button class="btn btn-sm" onclick="navigate('players')">عرض الكل <i class="ti ti-arrow-left"></i></button></div>
@@ -685,8 +692,8 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
         <select id="pl-branch" onchange="loadPlayers()" style="width:130px"><option value="">كل الفروع</option></select>
       </div>
       <div class="table-wrap">
-        <table><thead><tr><th>اللاعب</th><th>المركز</th><th>المجموعة</th><th>ولي الأمر</th><th>الهاتف</th><th>الحالة</th><th>الفرع</th><th></th></tr></thead>
-        <tbody id="pl-table"><tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr></tbody></table>
+        <table><thead><tr><th style="width:50px">#</th><th>اللاعب</th><th>المركز</th><th>المجموعة</th><th>ولي الأمر</th><th>الهاتف</th><th>الحالة</th><th>الفرع</th><th></th></tr></thead>
+        <tbody id="pl-table"><tr><td colspan="9"><div class="loading"><div class="spinner"></div></div></td></tr></tbody></table>
         <div class="pg-wrap"><span class="pg-info" id="pl-pginfo"></span><div class="pg-btns" id="pl-pgbtns"></div></div>
       </div>
     </div>
@@ -696,13 +703,14 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       <div style="display:flex;gap:8px;margin-bottom:1.25rem;border-bottom:1px solid var(--border);padding-bottom:.75rem">
         <button class="btn btn-primary" id="tab-coaches-list" onclick="switchCoachesTab('list')"><i class="ti ti-whistle"></i> المدربون</button>
         <button class="btn" id="tab-coaches-att" onclick="switchCoachesTab('att')"><i class="ti ti-clipboard-check"></i> الحضور والتقرير</button>
+        <button class="btn" id="tab-coaches-finance" onclick="switchCoachesTab('finance')"><i class="ti ti-cash"></i> السلف والمستحقات</button>
       </div>
 
       <!-- COACHES LIST TAB -->
       <div id="coaches-list-tab">
         <div class="table-wrap">
           <div class="card-head"><span class="card-title"><i class="ti ti-whistle"></i> المدربون</span><button class="btn btn-primary btn-sm" onclick="openModal('coachModal')"><i class="ti ti-plus"></i> مدرب جديد</button></div>
-          <table><thead><tr><th>الاسم</th><th>الهاتف</th><th>تاريخ الإضافة</th><th></th></tr></thead>
+          <table><thead><tr><th>الاسم</th><th>الهاتف</th><th>سعر السيشن</th><th>تاريخ الإضافة</th><th></th></tr></thead>
           <tbody id="coaches-table"><tr><td colspan="4"><div class="loading"><div class="spinner"></div></div></td></tr></tbody></table>
         </div>
       </div>
@@ -757,6 +765,25 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
             <div class="loading"><div class="spinner"></div></div>
           </div>
         </div>
+      </div>
+
+      <!-- COACH FINANCE TAB -->
+      <div id="coaches-finance-tab" style="display:none">
+        <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <select id="cfin-month" onchange="loadCoachFinance()" style="width:130px">
+              <option value="1">يناير</option><option value="2">فبراير</option><option value="3">مارس</option>
+              <option value="4">أبريل</option><option value="5">مايو</option><option value="6">يونيو</option>
+              <option value="7">يوليو</option><option value="8">أغسطس</option><option value="9">سبتمبر</option>
+              <option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option>
+            </select>
+            <select id="cfin-year" onchange="loadCoachFinance()" style="width:100px">
+              <option value="2026">2026</option><option value="2025">2025</option>
+            </select>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openCoachTransModal()"><i class="ti ti-plus"></i> تسجيل معاملة</button>
+        </div>
+        <div id="coach-finance-content"><div class="loading"><div class="spinner"></div></div></div>
       </div>
     </div>
 
@@ -1351,7 +1378,8 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
     <div class="modal-head"><span class="modal-title"><i class="ti ti-whistle"></i>إضافة مدرب</span><button class="icon-btn" onclick="closeModal('coachModal')"><i class="ti ti-x"></i></button></div>
     <div class="modal-body"><div class="form-grid">
       <div class="field full"><label>الاسم *</label><input id="c-name" type="text" placeholder="أ. محمود"></div>
-      <div class="field full"><label>الهاتف</label><input id="c-phone" type="text" placeholder="010xxxxxxxx"></div>
+      <div class="field"><label>الهاتف</label><input id="c-phone" type="text" placeholder="010xxxxxxxx"></div>
+      <div class="field"><label>سعر السيشن (ج)</label><input id="c-rate" type="number" placeholder="150" min="0"></div>
     </div></div>
     <div class="modal-foot"><button class="btn" onclick="closeModal('coachModal')">إلغاء</button><button class="btn btn-primary" onclick="saveCoach()"><i class="ti ti-check"></i> حفظ</button></div>
   </div>
@@ -1514,7 +1542,62 @@ async function checkConn(){
   }catch{document.getElementById('connDot').className='conn-dot err';document.getElementById('connLabel').textContent='خطأ في الاتصال';}
 }
 
+
+async function loadBirthdays(){
+  const el=document.getElementById('dash-birthdays');
+  if(!el) return;
+  const{data:players}=await sb.from('players').select('first_name,last_name,birth_date,group_age,branches(name)').eq('status','نشط').not('birth_date','is',null);
+  if(!players||!players.length){el.innerHTML='';return;}
+
+  const today=new Date();
+  today.setHours(0,0,0,0);
+  const upcoming=[];
+
+  players.forEach(p=>{
+    const bd=new Date(p.birth_date);
+    if(isNaN(bd)) return;
+    // This year's birthday
+    let next=new Date(today.getFullYear(),bd.getMonth(),bd.getDate());
+    next.setHours(0,0,0,0);
+    if(next<today) next=new Date(today.getFullYear()+1,bd.getMonth(),bd.getDate());
+    const diffDays=Math.round((next-today)/(1000*60*60*24));
+    if(diffDays>=0&&diffDays<=7){
+      const turningAge=next.getFullYear()-bd.getFullYear();
+      upcoming.push({name:`${p.first_name} ${p.last_name}`,branch:p.branches?.name||'',group:p.group_age||'',diffDays,age:turningAge,date:next});
+    }
+  });
+
+  if(!upcoming.length){el.innerHTML='';return;}
+  upcoming.sort((a,b)=>a.diffDays-b.diffDays);
+
+  el.innerHTML=`
+    <div style="background:linear-gradient(135deg,#2A1A35,#3D2456);border:1px solid #8B5CF6;border-radius:var(--radius-lg);padding:1.125rem">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:14px;font-weight:700;color:#C4B5FD">
+        🎂 أعياد ميلاد قريبة <span style="font-size:11px;font-weight:500;color:rgba(255,255,255,.5)">(خلال 7 أيام)</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${upcoming.map(b=>{
+          const when=b.diffDays===0?'<span style="color:#F5C518;font-weight:700">اليوم! 🎉</span>':b.diffDays===1?'<span style="color:#C4B5FD">غداً</span>':`<span style="color:rgba(255,255,255,.6)">بعد ${b.diffDays} أيام</span>`;
+          const dateStr=`${String(b.date.getDate()).padStart(2,'0')}/${String(b.date.getMonth()+1).padStart(2,'0')}`;
+          return`<div style="background:rgba(0,0,0,.2);border-radius:var(--radius);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:14px;font-weight:700;color:#fff">${b.name}</span>
+              <span style="font-size:11px;color:rgba(255,255,255,.5)">${b.group}</span>
+              ${b.branch?`<span style="font-size:11px;color:rgba(255,255,255,.5)"><i class="ti ti-building"></i> ${b.branch}</span>`:''}
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;font-size:12px">
+              <span style="color:#6DC82A;font-weight:600">يتم ${b.age} سنة</span>
+              <span>${when}</span>
+              <span style="color:rgba(255,255,255,.4)">${dateStr}</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
 async function loadDashboard(){
+  loadBirthdays();
   const[{count:pc},{data:subs},{data:exps},{data:leaguePays}]=await Promise.all([
     sb.from('players').select('*',{count:'exact',head:true}),
     sb.from('subscriptions').select('amount,paid_at'),
@@ -1582,18 +1665,28 @@ async function loadDashboard(){
 }
 
 let plPage=1;
+
+async function updatePlayerOrder(id, value){
+  const{error}=await sb.from('players').update({sort_order:Number(value)||0}).eq('id',id);
+  if(error){toast('خطأ في حفظ الترتيب','error');return;}
+  toast('تم تحديث الترتيب ✓');
+  // Reload after a short delay to re-sort
+  setTimeout(loadPlayers,400);
+}
 async function loadPlayers(p){if(p)plPage=p;
   const q=document.getElementById('pl-search').value.trim();
   const g=document.getElementById('pl-group').value;
   const s=document.getElementById('pl-status').value;
   const pp=10;
-  let query=sb.from('players').select('*',{count:'exact'}).order('created_at',{ascending:false}).range((plPage-1)*pp,plPage*pp-1);
+  let query=sb.from('players').select('*',{count:'exact'}).range((plPage-1)*pp,plPage*pp-1);
+  query=query.order('sort_order',{ascending:true});
   if(q)query=query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%`);
   if(g)query=query.eq('group_age',g);if(s)query=query.eq('status',s);const pb=document.getElementById('pl-branch')?.value;if(pb)query=query.eq('branch_id',pb);
   const{data,count}=await query;
   const tb=document.getElementById('pl-table');
-  if(!data||!data.length){tb.innerHTML='<tr><td colspan="7" class="empty-row"><i class="ti ti-users" style="font-size:28px;display:block;margin-bottom:10px;color:var(--primary)"></i>لا يوجد لاعبون — اضغط "لاعب جديد"</td></tr>';}
+  if(!data||!data.length){tb.innerHTML='<tr><td colspan="9" class="empty-row"><i class="ti ti-users" style="font-size:28px;display:block;margin-bottom:10px;color:var(--primary)"></i>لا يوجد لاعبون — اضغط "لاعب جديد"</td></tr>';}
   else{tb.innerHTML=data.map(p=>`<tr>
+    <td><input type="number" value="${p.sort_order||0}" onchange="updatePlayerOrder('${p.id}',this.value)" style="width:48px;padding:4px 6px;text-align:center;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-weight:700" title="رقم الترتيب"></td>
     <td><div style="display:flex;align-items:center;gap:9px">
       <div class="av" style="overflow:hidden">${p.photo_url?`<img src="${p.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:`${initials(p.first_name+' '+p.last_name)}`}</div>
       <div>
@@ -1652,15 +1745,15 @@ async function savePlayer(){
 async function loadCoaches(){
   const{data}=await sb.from('coaches').select('*').order('created_at',{ascending:false});
   const tb=document.getElementById('coaches-table');
-  if(!data||!data.length){tb.innerHTML='<tr><td colspan="4" class="empty-row">لا يوجد مدربون — ابدأ بإضافة أول مدرب</td></tr>';return;}
-  tb.innerHTML=data.map(c=>`<tr><td style="font-weight:600">${c.name}</td><td>${c.phone||'—'}</td><td>${fmtDate(c.created_at)}</td><td><div style="display:flex;gap:4px;justify-content:flex-end"><button class="icon-btn" onclick="openEditCoach(_get('${_set(c.id,c)}'))"  title="تعديل"><i class="ti ti-edit"></i></button><button class="icon-btn danger" onclick="deleteRecord('coaches','${c.id}',loadCoaches)" title="حذف"><i class="ti ti-trash"></i></button></div></td></tr>`).join('');
+  if(!data||!data.length){tb.innerHTML='<tr><td colspan="5" class="empty-row">لا يوجد مدربون — ابدأ بإضافة أول مدرب</td></tr>';return;}
+  tb.innerHTML=data.map(c=>`<tr><td style="font-weight:600">${c.name}</td><td>${c.phone||'—'}</td><td style="font-weight:600;color:var(--accent-dk)">${c.session_rate?c.session_rate+' ج':'—'}</td><td>${fmtDate(c.created_at)}</td><td><div style="display:flex;gap:4px;justify-content:flex-end"><button class="icon-btn" onclick="openEditCoach(_get('${_set(c.id,c)}'))"  title="تعديل"><i class="ti ti-edit"></i></button><button class="icon-btn danger" onclick="deleteRecord('coaches','${c.id}',loadCoaches)" title="حذف"><i class="ti ti-trash"></i></button></div></td></tr>`).join('');
 }
 async function saveCoach(){
   const name=document.getElementById('c-name').value.trim();if(!name){toast('يرجى إدخال الاسم','error');return;}
-  const{error}=await sb.from('coaches').insert({name,phone:document.getElementById('c-phone').value||null});
+  const{error}=await sb.from('coaches').insert({name,phone:document.getElementById('c-phone').value||null,session_rate:Number(document.getElementById('c-rate').value)||0});
   if(error){toast('خطأ: '+error.message,'error');return;}
   toast('تم حفظ المدرب بنجاح ✓');closeModal('coachModal');
-  document.getElementById('c-name').value='';document.getElementById('c-phone').value='';loadCoaches();
+  document.getElementById('c-name').value='';document.getElementById('c-phone').value='';document.getElementById('c-rate').value='';loadCoaches();
 }
 async function loadCoachSelect(id='p-coach'){
   const{data}=await sb.from('coaches').select('id,name').order('name');
@@ -2058,9 +2151,10 @@ async function openMatchDetail(matchId){
   openModal('matchDetailModal');
   document.getElementById('match-detail-body').innerHTML='<div class="loading"><div class="spinner"></div></div>';
 
-  const[{data:match},{data:ratings}]=await Promise.all([
+  const[{data:match},{data:ratings},{data:squad}]=await Promise.all([
     sb.from('matches').select('*,teams(id,name,group_age)').eq('id',matchId).single(),
     sb.from('match_player_ratings').select('*,players(id,first_name,last_name,photo_url,position),external_players(id,name,position)').eq('match_id',matchId),
+    sb.from('match_squad').select('*').eq('match_id',matchId),
   ]);
   if(!match) return;
 
@@ -2070,7 +2164,26 @@ async function openMatchDetail(matchId){
   const resultColor={'فوز':'var(--accent-dk)','تعادل':'var(--amber)','خسارة':'var(--red-dk)'};
   const ratedIds=new Set((ratings||[]).map(r=>r.player_id||r.external_player_id));
 
+  // Build squad status map
+  const squadMap={};
+  (squad||[]).forEach(s=>{squadMap[s.player_id||s.external_player_id]=s.squad_status;});
+  const starters=(teamPlayers||[]).filter(tp=>squadMap[tp.player_id||tp.external_player_id]==='starter');
+  const subs=(teamPlayers||[]).filter(tp=>squadMap[tp.player_id||tp.external_player_id]==='sub');
+  const list2=(teamPlayers||[]).filter(tp=>squadMap[tp.player_id||tp.external_player_id]==='excluded');
+
   document.getElementById('match-detail-title').innerHTML=`<i class="ti ti-ball-football" style="margin-left:6px;color:var(--primary)"></i>${match.teams?.name||'—'} vs ${match.opponent}`;
+
+  const renderSquadPlayer=(tp)=>{
+    const p=tp.players||tp.external_players;
+    if(!p) return '';
+    const name=tp.players?`${p.first_name} ${p.last_name}`:p.name;
+    const isAcademy=!!tp.players;
+    return`<div style="display:flex;align-items:center;gap:6px;background:var(--bg);border-radius:var(--radius);padding:5px 9px">
+      <div class="av" style="width:24px;height:24px;font-size:9px;overflow:hidden;${!isAcademy?'background:var(--amber-lt);color:var(--amber-dk)':''}">${p.photo_url&&isAcademy?`<img src="${p.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:`${initials(name)}`}</div>
+      <span style="font-size:12px;font-weight:500">${name}</span>
+      ${p.position?`<span style="font-size:10px;color:var(--text3)">${p.position}</span>`:''}
+    </div>`;
+  };
 
   document.getElementById('match-detail-body').innerHTML=`
     <!-- Match Header -->
@@ -2092,6 +2205,27 @@ async function openMatchDetail(matchId){
       </div>
       ${match.notes?`<div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,.5)">${match.notes}</div>`:''}
     </div>
+
+    <!-- SQUAD -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <div style="font-size:14px;font-weight:700">قائمة المباراة</div>
+      <button class="btn btn-sm btn-primary" onclick="openSquadModal('${matchId}')"><i class="ti ti-clipboard-list"></i> تحديد التشكيل</button>
+    </div>
+    ${(starters.length||subs.length||list2.length)?`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1.25rem">
+      <div style="background:var(--surface);border:1px solid var(--accent);border-radius:var(--radius-lg);padding:.875rem">
+        <div style="font-size:12px;font-weight:700;color:var(--accent-dk);margin-bottom:8px">⚽ التشكيل الأساسي (${starters.length})</div>
+        <div style="display:flex;flex-direction:column;gap:6px">${starters.map(renderSquadPlayer).join('')||'<span style="font-size:12px;color:var(--text3)">—</span>'}</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--amber);border-radius:var(--radius-lg);padding:.875rem">
+        <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:8px">🔄 دكة البدلاء (${subs.length})</div>
+        <div style="display:flex;flex-direction:column;gap:6px">${subs.map(renderSquadPlayer).join('')||'<span style="font-size:12px;color:var(--text3)">—</span>'}</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:.875rem">
+        <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px">📋 قائمة 2 (${list2.length})</div>
+        <div style="display:flex;flex-direction:column;gap:6px">${list2.map(renderSquadPlayer).join('')||'<span style="font-size:12px;color:var(--text3)">—</span>'}</div>
+      </div>
+    </div>`:'<div style="text-align:center;color:var(--text3);font-size:13px;padding:1rem;background:var(--surface);border-radius:var(--radius-lg);margin-bottom:1.25rem">لم يتم تحديد تشكيل المباراة بعد — اضغط "تحديد التشكيل"</div>'}
 
     <!-- Player Ratings -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
@@ -2167,6 +2301,91 @@ function openMatchRating(matchId, playerId, isAcademy, playerName){
   openModal('matchRatingModal');
 }
 
+// ============================================================
+// MATCH SQUAD SELECTION
+// ============================================================
+let currentSquadMatchId=null;
+async function openSquadModal(matchId){
+  currentSquadMatchId=matchId;
+  openModal('squadModal');
+  document.getElementById('squad-modal-body').innerHTML='<div class="loading"><div class="spinner"></div></div>';
+
+  const{data:match}=await sb.from('matches').select('team_id,teams(name)').eq('id',matchId).single();
+  const[{data:teamPlayers},{data:squad}]=await Promise.all([
+    sb.from('team_players').select('*,players(id,first_name,last_name,photo_url,position),external_players(id,name,position)').eq('team_id',match.team_id),
+    sb.from('match_squad').select('*').eq('match_id',matchId),
+  ]);
+
+  const squadMap={};
+  (squad||[]).forEach(s=>{squadMap[s.player_id||s.external_player_id]=s.squad_status;});
+
+  document.getElementById('squad-modal-title').textContent=`تشكيل ${match.teams?.name||''}`;
+
+  if(!teamPlayers||!teamPlayers.length){
+    document.getElementById('squad-modal-body').innerHTML='<div style="text-align:center;color:var(--text3);padding:2rem">لا يوجد لاعبون في هذا الفريق</div>';
+    return;
+  }
+
+  document.getElementById('squad-modal-body').innerHTML=`
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px">حدد حالة كل لاعب في هذه المباراة:</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${teamPlayers.map(tp=>{
+        const p=tp.players||tp.external_players;
+        if(!p) return '';
+        const name=tp.players?`${p.first_name} ${p.last_name}`:p.name;
+        const pid=tp.player_id||tp.external_player_id;
+        const isAcademy=!!tp.players;
+        const status=squadMap[pid]||'excluded';
+        return`<div style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px">
+          <div class="av" style="width:30px;height:30px;font-size:11px;overflow:hidden;${!isAcademy?'background:var(--amber-lt);color:var(--amber-dk)':''}">${p.photo_url&&isAcademy?`<img src="${p.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:`${initials(name)}`}</div>
+          <div style="flex:1"><div style="font-weight:600;font-size:13px">${name}</div>${p.position?`<div style="font-size:10px;color:var(--text3)">${p.position}</div>`:''}</div>
+          <div style="display:flex;gap:4px" data-pid="${pid}" data-academy="${isAcademy}">
+            <button class="squad-btn ${status==='starter'?'active-starter':''}" data-status="starter" onclick="setSquadStatus(this,'starter')">أساسي</button>
+            <button class="squad-btn ${status==='sub'?'active-sub':''}" data-status="sub" onclick="setSquadStatus(this,'sub')">احتياطي</button>
+            <button class="squad-btn ${status==='excluded'?'active-excluded':''}" data-status="excluded" onclick="setSquadStatus(this,'excluded')">قائمة 2</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function setSquadStatus(btn,status){
+  const parent=btn.parentElement;
+  parent.querySelectorAll('.squad-btn').forEach(b=>{b.classList.remove('active-starter','active-sub','active-excluded');});
+  if(status==='starter') btn.classList.add('active-starter');
+  else if(status==='sub') btn.classList.add('active-sub');
+  else btn.classList.add('active-excluded');
+}
+
+async function saveSquad(){
+  if(!currentSquadMatchId) return;
+  const rows=document.querySelectorAll('#squad-modal-body [data-pid]');
+  const inserts=[];
+  rows.forEach(row=>{
+    const pid=row.dataset.pid;
+    const isAcademy=row.dataset.academy==='true';
+    const activeBtn=row.querySelector('.active-starter,.active-sub,.active-excluded');
+    if(!activeBtn) return;
+    const status=activeBtn.dataset.status;
+    inserts.push({
+      match_id:currentSquadMatchId,
+      player_id:isAcademy?pid:null,
+      external_player_id:isAcademy?null:pid,
+      squad_status:status,
+    });
+  });
+
+  // Delete existing squad for this match, then insert new
+  await sb.from('match_squad').delete().eq('match_id',currentSquadMatchId);
+  if(inserts.length){
+    const{error}=await sb.from('match_squad').insert(inserts);
+    if(error){toast('خطأ: '+error.message,'error');return;}
+  }
+  toast('تم حفظ التشكيل ✓');
+  closeModal('squadModal');
+  openMatchDetail(currentSquadMatchId);
+}
+
 async function saveMatchRating(){
   const matchId=document.getElementById('mr-match-id').value;
   const playerId=document.getElementById('mr-player-id').value;
@@ -2200,11 +2419,128 @@ async function saveMatchRating(){
 function switchCoachesTab(tab){
   document.getElementById('coaches-list-tab').style.display=tab==='list'?'block':'none';
   document.getElementById('coaches-att-tab').style.display=tab==='att'?'block':'none';
+  document.getElementById('coaches-finance-tab').style.display=tab==='finance'?'block':'none';
   document.getElementById('tab-coaches-list').className=tab==='list'?'btn btn-primary':'btn';
   document.getElementById('tab-coaches-att').className=tab==='att'?'btn btn-primary':'btn';
+  document.getElementById('tab-coaches-finance').className=tab==='finance'?'btn btn-primary':'btn';
   if(tab==='list') loadCoaches();
   if(tab==='att') loadCoachAtt();
+  if(tab==='finance') loadCoachFinance();
 }
+
+// ============================================================
+// COACH FINANCE (advances / bonuses / deductions + monthly settlement)
+// ============================================================
+function openCoachTransModal(){
+  loadCoachSelectGeneric('ct-coach');
+  const now=new Date();
+  document.getElementById('ct-date').value=now.toISOString().split('T')[0];
+  document.getElementById('ct-amount').value='';
+  document.getElementById('ct-notes').value='';
+  openModal('coachTransModal');
+}
+
+async function saveCoachTrans(){
+  const coachId=document.getElementById('ct-coach').value;
+  const type=document.getElementById('ct-type').value;
+  const amount=Number(document.getElementById('ct-amount').value);
+  const date=document.getElementById('ct-date').value;
+  if(!coachId||!amount||!date){toast('يرجى ملء الحقول المطلوبة','error');return;}
+  if(!isValidYear(date)){toast('تاريخ غير صحيح','error');return;}
+  const d=new Date(date);
+  const{error}=await sb.from('coach_transactions').insert({
+    coach_id:coachId,
+    trans_type:type,
+    amount:amount,
+    trans_date:date,
+    month:d.getMonth()+1,
+    year:d.getFullYear(),
+    notes:document.getElementById('ct-notes').value||null,
+  });
+  if(error){toast('خطأ: '+error.message,'error');return;}
+  toast('تم تسجيل المعاملة ✓');
+  closeModal('coachTransModal');
+  loadCoachFinance();
+}
+
+async function loadCoachFinance(){
+  const monthSel=document.getElementById('cfin-month');
+  const yearSel=document.getElementById('cfin-year');
+  const now=new Date();
+  if(monthSel&&!monthSel.dataset.init){monthSel.value=now.getMonth()+1;monthSel.dataset.init='1';}
+  if(yearSel&&!yearSel.dataset.init){yearSel.value=now.getFullYear();yearSel.dataset.init='1';}
+  const month=Number(monthSel.value);
+  const year=Number(yearSel.value);
+  const el=document.getElementById('coach-finance-content');
+  el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+
+  const start=`${year}-${String(month).padStart(2,'0')}-01`;
+  const end=new Date(year,month,0).toISOString().split('T')[0];
+
+  // Fetch coaches, their attendance this month, and transactions
+  const[{data:coaches},{data:attRecs},{data:trans}]=await Promise.all([
+    sb.from('coaches').select('id,name,session_rate').order('name'),
+    sb.from('coach_attendance').select('coach_id,status').gte('session_date',start).lte('session_date',end),
+    sb.from('coach_transactions').select('*').eq('month',month).eq('year',year),
+  ]);
+
+  if(!coaches||!coaches.length){
+    el.innerHTML='<div style="text-align:center;padding:3rem;color:var(--text3)">لا يوجد مدربون</div>';
+    return;
+  }
+
+  const monthNames=['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
+  const cards=coaches.map(c=>{
+    const present=(attRecs||[]).filter(a=>a.coach_id===c.id&&a.status==='حاضر').length;
+    const rate=c.session_rate||0;
+    const earned=present*rate;
+    const cTrans=(trans||[]).filter(t=>t.coach_id===c.id);
+    const bonuses=cTrans.filter(t=>t.trans_type==='مكافأة').reduce((s,t)=>s+Number(t.amount),0);
+    const advances=cTrans.filter(t=>t.trans_type==='سلفة').reduce((s,t)=>s+Number(t.amount),0);
+    const deductions=cTrans.filter(t=>t.trans_type==='خصم').reduce((s,t)=>s+Number(t.amount),0);
+    const net=earned+bonuses-advances-deductions;
+
+    const transRows=cTrans.length?cTrans.map(t=>{
+      const tColor=t.trans_type==='مكافأة'?'var(--accent-dk)':'var(--red-dk)';
+      const sign=t.trans_type==='مكافأة'?'+':'−';
+      return`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid var(--border);font-size:12px">
+        <span style="color:${tColor};font-weight:600">${sign} ${fmt(t.amount)} ج · ${t.trans_type}</span>
+        <span style="color:var(--text3);display:flex;gap:8px;align-items:center">${t.notes||''} <button class="icon-btn danger" style="padding:2px" onclick="deleteRecord('coach_transactions','${t.id}',loadCoachFinance)"><i class="ti ti-trash" style="font-size:13px"></i></button></span>
+      </div>`;
+    }).join(''):'';
+
+    return`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.125rem;border-right:3px solid ${net>=0?'var(--accent)':'var(--red)'}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:15px;font-weight:700">${c.name}</div>
+        <div style="font-size:11px;color:var(--text3)">سعر السيشن: ${rate} ج</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px">
+        <div style="background:var(--bg);border-radius:8px;padding:8px 10px">
+          <div style="font-size:11px;color:var(--text3)">الحضور × السعر</div>
+          <div style="font-size:14px;font-weight:700">${present} × ${rate} = ${fmt(earned)} ج</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:8px 10px">
+          <div style="font-size:11px;color:var(--text3)">صافي المستحق</div>
+          <div style="font-size:16px;font-weight:800;color:${net>=0?'var(--accent-dk)':'var(--red-dk)'}">${fmt(net)} ج</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:11px;margin-bottom:6px">
+        ${bonuses?`<span style="color:var(--accent-dk)">+ مكافآت: ${fmt(bonuses)}</span>`:''}
+        ${advances?`<span style="color:var(--red-dk)">− سلف: ${fmt(advances)}</span>`:''}
+        ${deductions?`<span style="color:var(--red-dk)">− خصومات: ${fmt(deductions)}</span>`:''}
+      </div>
+      ${transRows}
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`
+    <div style="font-size:14px;font-weight:700;margin-bottom:1rem;color:var(--text3)">
+      مستحقات شهر ${monthNames[month]} ${year}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px">${cards}</div>`;
+}
+
 // ============================================================
 // COACH ATTENDANCE
 // ============================================================
@@ -3863,13 +4199,14 @@ function openEditCoach(c){
   document.getElementById('ec-id').value=c.id;
   document.getElementById('ec-name').value=c.name||'';
   document.getElementById('ec-phone').value=c.phone||'';
+  document.getElementById('ec-rate').value=c.session_rate||'';
   openModal('editCoachModal');
 }
 async function updateCoach(){
   const id=document.getElementById('ec-id').value;
   const name=document.getElementById('ec-name').value.trim();
   if(!name){toast('يرجى إدخال الاسم','error');return;}
-  const{error}=await sb.from('coaches').update({name,phone:document.getElementById('ec-phone').value||null}).eq('id',id);
+  const{error}=await sb.from('coaches').update({name,phone:document.getElementById('ec-phone').value||null,session_rate:Number(document.getElementById('ec-rate').value)||0}).eq('id',id);
   if(error){toast('خطأ: '+error.message,'error');return;}
   toast('تم تعديل بيانات المدرب ✓');closeModal('editCoachModal');loadCoaches();
 }
@@ -4820,6 +5157,18 @@ initAuth();
   </div>
 </div>
 
+<!-- SQUAD MODAL -->
+<div id="squadModal" class="modal-overlay">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head"><span class="modal-title"><i class="ti ti-clipboard-list"></i> <span id="squad-modal-title">تحديد التشكيل</span></span><button class="icon-btn" onclick="closeModal('squadModal')"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body" id="squad-modal-body" style="max-height:60vh;overflow-y:auto"><div class="loading"><div class="spinner"></div></div></div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('squadModal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveSquad()"><i class="ti ti-check"></i> حفظ التشكيل</button>
+    </div>
+  </div>
+</div>
+
 <!-- MATCH DETAIL MODAL -->
 <div id="matchDetailModal" class="modal-overlay">
   <div class="modal" style="max-width:800px;max-height:90vh">
@@ -5053,6 +5402,30 @@ initAuth();
   </div>
 </div>
 
+<!-- COACH TRANSACTION MODAL -->
+<div id="coachTransModal" class="modal-overlay">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head"><span class="modal-title"><i class="ti ti-cash"></i> تسجيل معاملة مالية</span><button class="icon-btn" onclick="closeModal('coachTransModal')"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body"><div class="form-grid">
+      <div class="field full"><label>المدرب *</label><select id="ct-coach"><option value="">اختر مدرب...</option></select></div>
+      <div class="field"><label>النوع *</label>
+        <select id="ct-type">
+          <option value="سلفة">سلفة (تُخصم) 🔻</option>
+          <option value="مكافأة">مكافأة (تُضاف) 🔺</option>
+          <option value="خصم">خصم (يُخصم) 🔻</option>
+        </select>
+      </div>
+      <div class="field"><label>المبلغ (ج) *</label><input id="ct-amount" type="number" placeholder="500" min="0"></div>
+      <div class="field full"><label>التاريخ *</label><input id="ct-date" type="date"></div>
+      <div class="field full"><label>السبب / ملاحظة</label><input id="ct-notes" type="text" placeholder="مثال: سلفة منتصف الشهر، مكافأة فوز..."></div>
+    </div></div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('coachTransModal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveCoachTrans()"><i class="ti ti-check"></i> حفظ</button>
+    </div>
+  </div>
+</div>
+
 <!-- EDIT COACH MODAL -->
 <div id="editCoachModal" class="modal-overlay">
   <div class="modal">
@@ -5060,7 +5433,8 @@ initAuth();
     <div class="modal-body"><div class="form-grid">
       <input type="hidden" id="ec-id">
       <div class="field full"><label>الاسم *</label><input id="ec-name" type="text"></div>
-      <div class="field full"><label>الهاتف</label><input id="ec-phone" type="text"></div>
+      <div class="field"><label>الهاتف</label><input id="ec-phone" type="text"></div>
+      <div class="field"><label>سعر السيشن (ج)</label><input id="ec-rate" type="number" min="0"></div>
     </div></div>
     <div class="modal-foot"><button class="btn" onclick="closeModal('editCoachModal')">إلغاء</button><button class="btn btn-primary" onclick="updateCoach()"><i class="ti ti-check"></i> حفظ</button></div>
   </div>
@@ -5216,3 +5590,4 @@ initAuth();
 </div>
 </body>
 </html>
+
