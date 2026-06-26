@@ -623,7 +623,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:10px;color:rgba(255,255,255,.2);background:rgba(255,255,255,.05);padding:2px 8px;border-radius:10px">v1.4.5 — 25/06/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:10px;color:rgba(255,255,255,.2);background:rgba(255,255,255,.05);padding:2px 8px;border-radius:10px">v1.5.0 — 26/06/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -994,6 +994,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       <div style="display:flex;gap:8px;margin-bottom:1.25rem;border-bottom:1px solid var(--border);padding-bottom:.75rem;flex-wrap:wrap">
         <button class="btn btn-primary" id="tab-teams-list" onclick="switchTeamsTab('list')"><i class="ti ti-tournament"></i> فرق الدوري بالمجموعات</button>
         <button class="btn" id="tab-teams-matches" onclick="switchTeamsTab('matches')"><i class="ti ti-ball-football"></i> المباريات</button>
+        <button class="btn" id="tab-teams-lineup" onclick="switchTeamsTab('lineup')"><i class="ti ti-layout-grid"></i> تشكيل ليلة المباراة</button>
         <button class="btn" id="tab-teams-manage" onclick="switchTeamsTab('manage')"><i class="ti ti-settings"></i> إدارة فرق الدوري</button>
         <button class="btn" id="tab-teams-external" onclick="switchTeamsTab('external')"><i class="ti ti-users"></i> اللاعبون الخارجيون</button>
       </div>
@@ -1031,6 +1032,23 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
             <thead><tr><th>الفريق</th><th>الخصم</th><th>التاريخ</th><th>الملعب</th><th>النتيجة</th><th>الفارق</th><th></th></tr></thead>
             <tbody id="matches-table"><tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- LINEUP TAB -->
+      <div id="teams-lineup-tab" style="display:none">
+        <div class="filter-bar" style="margin-bottom:1.25rem">
+          <select id="lineup-match-select" onchange="renderLineup()" style="min-width:280px">
+            <option value="">اختر المباراة...</option>
+          </select>
+          <button class="btn btn-sm" onclick="window.print()"><i class="ti ti-printer"></i> طباعة</button>
+        </div>
+        <div id="lineup-container">
+          <div style="text-align:center;padding:3rem;color:var(--text3)">
+            <i class="ti ti-layout-grid" style="font-size:40px;display:block;margin-bottom:12px;color:var(--primary)"></i>
+            <div style="font-size:14px;font-weight:600;margin-bottom:6px">اختر مباراة لعرض التشكيل</div>
+            <div style="font-size:12px">حدد التشكيل أولاً من تفاصيل المباراة</div>
+          </div>
         </div>
       </div>
 
@@ -3155,7 +3173,7 @@ async function loadTeamsByAge(){
   }).join('');
 }
 function switchTeamsTab(tab){
-  ['list','matches','manage','external'].forEach(t=>{
+  ['list','matches','lineup','manage','external'].forEach(t=>{
     const el=document.getElementById('teams-'+t+'-tab');
     if(el) el.style.display=tab===t?'block':'none';
     const btn=document.getElementById('tab-teams-'+t);
@@ -3163,8 +3181,121 @@ function switchTeamsTab(tab){
   });
   if(tab==='list') loadTeamsByAge();
   if(tab==='matches') loadMatches();
+  if(tab==='lineup') loadLineupMatches();
   if(tab==='manage') loadTeams();
   if(tab==='external') loadExternalPlayers();
+}
+
+// ============================================================
+// MATCH-NIGHT LINEUP (formation on pitch)
+// ============================================================
+async function loadLineupMatches(){
+  const sel=document.getElementById('lineup-match-select');
+  const{data:matches}=await sb.from('matches').select('id,opponent,match_date,teams(name)').order('match_date',{ascending:false});
+  sel.innerHTML='<option value="">اختر المباراة...</option>'+(matches||[]).map(m=>`<option value="${m.id}">${m.teams?.name||'—'} vs ${m.opponent} · ${fmtDate(m.match_date)}</option>`).join('');
+}
+
+// Classify a position string into a line: gk / def / mid / att
+function positionLine(pos){
+  if(!pos) return 'mid';
+  if(pos.includes('حارس')) return 'gk';
+  if(pos.includes('دفاع')||pos.includes('ظهير')) return 'def';
+  if(pos.includes('وسط')) return 'mid';
+  if(pos.includes('جناح')||pos.includes('مهاجم')) return 'att';
+  return 'mid';
+}
+
+async function renderLineup(){
+  const matchId=document.getElementById('lineup-match-select').value;
+  const el=document.getElementById('lineup-container');
+  if(!matchId){
+    el.innerHTML='<div style="text-align:center;padding:3rem;color:var(--text3)"><i class="ti ti-layout-grid" style="font-size:40px;display:block;margin-bottom:12px;color:var(--primary)"></i><div style="font-size:14px;font-weight:600">اختر مباراة لعرض التشكيل</div></div>';
+    return;
+  }
+  el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+
+  const[{data:match},{data:squad}]=await Promise.all([
+    sb.from('matches').select('*,teams(name)').eq('id',matchId).single(),
+    sb.from('match_squad').select('*,players(first_name,last_name,position),external_players(name,position)').eq('match_id',matchId),
+  ]);
+
+  const starters=(squad||[]).filter(s=>s.squad_status==='starter');
+  const subs=(squad||[]).filter(s=>s.squad_status==='sub');
+
+  if(!starters.length){
+    el.innerHTML='<div style="text-align:center;padding:3rem;color:var(--text3)"><i class="ti ti-clipboard-x" style="font-size:40px;display:block;margin-bottom:12px;color:var(--amber)"></i><div style="font-size:14px;font-weight:600;margin-bottom:6px">لم يتم تحديد التشكيل الأساسي لهذه المباراة</div><div style="font-size:12px">افتح تفاصيل المباراة واضغط "تحديد التشكيل"</div></div>';
+    return;
+  }
+
+  // Group starters by line
+  const lines={gk:[],def:[],mid:[],att:[]};
+  starters.forEach(s=>{
+    const p=s.players||s.external_players;
+    const name=s.players?`${p.first_name} ${p.last_name}`:p.name;
+    lines[positionLine(p.position)].push({name,pos:p.position});
+  });
+
+  // Y positions for each line (in a 400x520 pitch)
+  const lineY={att:75,mid:200,def:340,gk:455};
+  const lineColor={gk:'#F5C518',def:'#2D8A3E',mid:'#185FA5',att:'#E03535'};
+  const gkTextColor={gk:'#1a1a1a',def:'#fff',mid:'#fff',att:'#fff'};
+
+  // Build circles
+  let circles='';
+  ['att','mid','def','gk'].forEach(line=>{
+    const players=lines[line];
+    const n=players.length;
+    if(!n) return;
+    const y=lineY[line];
+    players.forEach((pl,i)=>{
+      const x=Math.round((400/(n+1))*(i+1));
+      const parts=pl.name.split(' ');
+      const fn=parts[0]||'';
+      const ln=parts[1]||'';
+      circles+=`<g>
+        <circle cx="${x}" cy="${y}" r="34" fill="${lineColor[line]}" stroke="#fff" stroke-width="2.5"/>
+        <text x="${x}" y="${ln?y-4:y+4}" text-anchor="middle" font-size="13" font-weight="700" fill="${gkTextColor[line]}">${fn}</text>
+        ${ln?`<text x="${x}" y="${y+13}" text-anchor="middle" font-size="12" font-weight="600" fill="${gkTextColor[line]}">${ln}</text>`:''}
+      </g>`;
+    });
+  });
+
+  const subsHtml=subs.length?`
+    <div style="margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px">
+      <div style="font-size:13px;font-weight:600;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:6px"><i class="ti ti-refresh"></i> دكة البدلاء (${subs.length})</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center">
+        ${subs.map(s=>{
+          const p=s.players||s.external_players;
+          const name=s.players?`${p.first_name} ${p.last_name}`:p.name;
+          const parts=name.split(' ');
+          return`<div style="width:64px;height:64px;border-radius:50%;background:#888;border:2px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;text-align:center;line-height:1.2"><span>${parts[0]||''}</span>${parts[1]?`<span>${parts[1]}</span>`:''}</div>`;
+        }).join('')}
+      </div>
+    </div>`:'';
+
+  el.innerHTML=`
+    <div style="text-align:center;margin-bottom:1rem">
+      <div style="font-size:16px;font-weight:700">${match.teams?.name||'—'} <span style="color:var(--text3)">vs</span> ${match.opponent}</div>
+      <div style="font-size:12px;color:var(--text3)">${fmtDate(match.match_date)} · ${match.location||''}</div>
+    </div>
+    <div style="background:var(--surface-1,#fff);border-radius:12px;padding:1rem;max-width:420px;margin:0 auto">
+      <svg viewBox="0 0 400 520" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:12px;background:#1a7a3c">
+        <rect x="8" y="8" width="384" height="504" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2" rx="4"/>
+        <line x1="8" y1="260" x2="392" y2="260" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
+        <circle cx="200" cy="260" r="48" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
+        <circle cx="200" cy="260" r="3" fill="rgba(255,255,255,.5)"/>
+        <rect x="120" y="8" width="160" height="64" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
+        <rect x="120" y="448" width="160" height="64" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
+        ${circles}
+      </svg>
+      <div style="display:flex;justify-content:center;gap:14px;margin-top:12px;font-size:12px;flex-wrap:wrap">
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#F5C518"></span> حارس</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#2D8A3E"></span> دفاع</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#185FA5"></span> وسط</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#E03535"></span> هجوم</span>
+      </div>
+      ${subsHtml}
+    </div>`;
 }
 
 function switchAddPlayerTab(tab){
@@ -5620,4 +5751,5 @@ initAuth();
 </div>
 </body>
 </html>
+
 
