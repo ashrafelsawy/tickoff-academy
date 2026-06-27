@@ -562,9 +562,51 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
 .squad-btn.active-starter{background:var(--accent);border-color:var(--accent);color:#fff}
 .squad-btn.active-sub{background:var(--amber);border-color:var(--amber);color:#fff}
 .squad-btn.active-excluded{background:var(--text3);border-color:var(--text3);color:#fff}
+
+/* QUICK ATTENDANCE MODE */
+#quickAttOverlay{position:fixed;inset:0;background:#0D1B0F;z-index:9999;display:none;flex-direction:column}
+#quickAttOverlay.active{display:flex}
+.qa-header{background:linear-gradient(135deg,#1A5C2A,#2D8A3E);padding:14px 16px;color:#fff;flex-shrink:0}
+.qa-counter{display:flex;background:#141414;padding:10px;gap:8px;justify-content:center;flex-shrink:0}
+.qa-list{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;-webkit-overflow-scrolling:touch}
+.qa-card{display:flex;align-items:center;gap:12px;border-radius:14px;padding:12px 14px;transition:all .15s;user-select:none}
+.qa-card.present{background:#0f2e16;border:1.5px solid #2D8A3E}
+.qa-card.absent{background:#2a1212;border:1.5px solid #E03535}
+.qa-card.unset{background:#1a1a1a;border:1.5px solid #2a2a2a}
+.qa-toggle{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;flex-shrink:0;cursor:pointer}
+.qa-foot{padding:14px;background:#0D1B0F;flex-shrink:0;display:flex;gap:8px}
 </style>
 </head>
 <body>
+<!-- QUICK ATTENDANCE OVERLAY -->
+<div id="quickAttOverlay">
+  <div class="qa-header">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <button onclick="closeQuickAttendance()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:36px;height:36px;border-radius:10px;font-size:18px;cursor:pointer">✕</button>
+      <div style="font-size:18px;font-weight:800">الوضع السريع</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div id="qa-date-text" style="font-size:12px;opacity:.85;flex:1"></div>
+      <select id="qa-group" onchange="loadQuickPlayers()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:5px 10px;font-size:13px;font-weight:600">
+        <option value="">كل المجموعات</option>
+        <option>تحت 10</option><option>تحت 12</option><option>تحت 14</option><option>تحت 16</option><option>تحت 18</option>
+      </select>
+    </div>
+  </div>
+  <div class="qa-counter">
+    <div style="text-align:center;flex:1"><div id="qa-present-count" style="font-size:22px;font-weight:800;color:#6DC82A">0</div><div style="font-size:11px;color:#888">حاضر</div></div>
+    <div style="width:1px;background:#2a2a2a"></div>
+    <div style="text-align:center;flex:1"><div id="qa-absent-count" style="font-size:22px;font-weight:800;color:#E03535">0</div><div style="font-size:11px;color:#888">غائب</div></div>
+    <div style="width:1px;background:#2a2a2a"></div>
+    <div style="text-align:center;flex:1"><div id="qa-total-count" style="font-size:22px;font-weight:800;color:#888">0</div><div style="font-size:11px;color:#888">الإجمالي</div></div>
+  </div>
+  <div class="qa-list" id="qa-list"></div>
+  <div class="qa-foot">
+    <button onclick="markAllPresent()" style="background:#1a3a1f;border:1.5px solid #2D8A3E;border-radius:14px;padding:14px;font-size:14px;font-weight:700;color:#6DC82A;cursor:pointer;flex:0 0 auto"><i class="ti ti-checks"></i> الكل حاضر</button>
+    <button onclick="saveQuickAttendance()" id="qa-save-btn" style="flex:1;background:#6DC82A;border:none;border-radius:14px;padding:16px;font-size:17px;font-weight:800;color:#0D1B0F;cursor:pointer">✓ حفظ الحضور</button>
+  </div>
+</div>
+
 
 <aside class="sidebar">
   <div class="logo">
@@ -623,7 +665,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:10px;color:rgba(255,255,255,.2);background:rgba(255,255,255,.05);padding:2px 8px;border-radius:10px">v1.5.0 — 26/06/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:10px;color:rgba(255,255,255,.2);background:rgba(255,255,255,.05);padding:2px 8px;border-radius:10px">v1.6.1 — 26/06/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -1503,7 +1545,7 @@ const PAGES={
   players:{title:'اللاعبون',sub:'إدارة اللاعبين المسجلين',actions:'<button class="btn btn-primary" onclick="openModal(\'playerModal\');loadCoachSelect()"><i class="ti ti-plus"></i> لاعب جديد</button>'},
   coaches:{title:'المدربون',sub:'إدارة المدربين',actions:'<button class="btn btn-primary" onclick="openModal(\'coachModal\')"><i class="ti ti-plus"></i> مدرب جديد</button>'},
   subscriptions:{title:'الاشتراكات',sub:'إدارة المدفوعات',actions:'<button class="btn btn-primary" onclick="openModal(\'subModal\');loadPlayerSelect(\'s-player\')"><i class="ti ti-plus"></i> تسجيل دفعة</button>'},
-  attendance:{title:'الحضور',sub:'سجل الحضور والغياب',actions:'<button class="btn btn-primary" onclick="openModal(\'attModal\');loadPlayerSelect(\'a-player\');autoSetToday(\'a-date\');setTimeout(()=>showDayName(\'a-date\',\'a-day-name\'),50)"><i class="ti ti-plus"></i> تسجيل حضور</button>'},
+  attendance:{title:'الحضور',sub:'سجل الحضور والغياب',actions:'<button class="btn btn-primary" onclick="openQuickAttendance()" style="background:linear-gradient(135deg,#1A5C2A,#2D8A3E)"><i class="ti ti-bolt"></i> الوضع السريع</button> <button class="btn" onclick="openModal(\'attModal\');loadPlayerSelect(\'a-player\');autoSetToday(\'a-date\');setTimeout(()=>showDayName(\'a-date\',\'a-day-name\'),50)"><i class="ti ti-plus"></i> تسجيل فردي</button>'},
   expenses:{title:'المصروفات',sub:'تتبع مصروفات الأكاديمية',actions:'<button class="btn btn-primary" onclick="openModal(\'expModal\')"><i class="ti ti-plus"></i> مصروف جديد</button>'},
   schedule:{title:'الجدول',sub:'جدول التدريبات والمباريات',actions:'<button class="btn btn-primary" onclick="openModal(\'sessionModal\');loadCoachSelect(\'sc-coach\')"><i class="ti ti-plus"></i> جلسة جديدة</button>'},
   reports:{title:'التقارير',sub:'ملخص الأداء العام',actions:''},
@@ -1575,6 +1617,125 @@ async function checkConn(){
   }catch{document.getElementById('connDot').className='conn-dot err';document.getElementById('connLabel').textContent='خطأ في الاتصال';}
 }
 
+
+
+// ============================================================
+// QUICK ATTENDANCE MODE (mobile-first)
+// ============================================================
+let quickAttState={};  // playerId -> 'present'|'absent'|null
+
+function openQuickAttendance(){
+  document.getElementById('quickAttOverlay').classList.add('active');
+  // Set date text
+  const now=new Date();
+  const days=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const d=String(now.getDate()).padStart(2,'0');
+  const m=String(now.getMonth()+1).padStart(2,'0');
+  document.getElementById('qa-date-text').textContent=`${days[now.getDay()]} ${d}-${m}-${now.getFullYear()}`;
+  quickAttState={};
+  loadQuickPlayers();
+}
+
+function closeQuickAttendance(){
+  document.getElementById('quickAttOverlay').classList.remove('active');
+}
+
+async function loadQuickPlayers(){
+  const group=document.getElementById('qa-group').value;
+  const list=document.getElementById('qa-list');
+  list.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+
+  let query=sb.from('players').select('id,first_name,last_name,group_age').eq('status','نشط').order('sort_order',{ascending:true});
+  if(group) query=query.eq('group_age',group);
+  const{data:players}=await query;
+
+  if(!players||!players.length){
+    list.innerHTML='<div style="text-align:center;color:#888;padding:2rem">لا يوجد لاعبون</div>';
+    updateQuickCounters([]);
+    return;
+  }
+
+  list.innerHTML=players.map(p=>{
+    const name=`${p.first_name} ${p.last_name}`;
+    const state=quickAttState[p.id]||'unset';
+    const init=(p.first_name?.[0]||'')+(p.last_name?.[0]||'');
+    return `<div class="qa-card ${state}" id="qa-card-${p.id}" onclick="toggleQuickAtt('${p.id}')">
+      <div style="width:44px;height:44px;border-radius:50%;background:#2D8A3E;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:15px;flex-shrink:0">${init}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div><div style="font-size:11px;color:#888">${p.group_age||''}</div></div>
+      <div class="qa-toggle" id="qa-toggle-${p.id}" style="background:${state==='present'?'#6DC82A':state==='absent'?'#E03535':'#333'}">${state==='present'?'✓':state==='absent'?'✕':'?'}</div>
+    </div>`;
+  }).join('');
+
+  // Store player list for saving
+  window._quickPlayers=players;
+  updateQuickCounters(players);
+}
+
+function toggleQuickAtt(playerId){
+  const cur=quickAttState[playerId]||'unset';
+  // Cycle: unset -> present -> absent -> present (we keep it simple: unset->present->absent->present...)
+  let next;
+  if(cur==='unset') next='present';
+  else if(cur==='present') next='absent';
+  else next='present';
+  quickAttState[playerId]=next;
+
+  const card=document.getElementById('qa-card-'+playerId);
+  const toggle=document.getElementById('qa-toggle-'+playerId);
+  card.className='qa-card '+next;
+  toggle.style.background=next==='present'?'#6DC82A':next==='absent'?'#E03535':'#333';
+  toggle.textContent=next==='present'?'✓':next==='absent'?'✕':'?';
+  updateQuickCounters(window._quickPlayers||[]);
+}
+
+function markAllPresent(){
+  (window._quickPlayers||[]).forEach(p=>{
+    quickAttState[p.id]='present';
+    const card=document.getElementById('qa-card-'+p.id);
+    const toggle=document.getElementById('qa-toggle-'+p.id);
+    if(card){card.className='qa-card present';}
+    if(toggle){toggle.style.background='#6DC82A';toggle.textContent='✓';}
+  });
+  updateQuickCounters(window._quickPlayers||[]);
+}
+
+function updateQuickCounters(players){
+  let present=0,absent=0;
+  players.forEach(p=>{
+    if(quickAttState[p.id]==='present') present++;
+    else if(quickAttState[p.id]==='absent') absent++;
+  });
+  document.getElementById('qa-present-count').textContent=present;
+  document.getElementById('qa-absent-count').textContent=absent;
+  document.getElementById('qa-total-count').textContent=players.length;
+}
+
+async function saveQuickAttendance(){
+  const btn=document.getElementById('qa-save-btn');
+  const today=new Date().toISOString().split('T')[0];
+  const records=[];
+  Object.keys(quickAttState).forEach(pid=>{
+    const status=quickAttState[pid];
+    if(status==='present'||status==='absent'){
+      records.push({player_id:pid,session_date:today,status:status==='present'?'حاضر':'غائب'});
+    }
+  });
+
+  if(!records.length){toast('لم تسجّل أي حضور بعد','error');return;}
+
+  btn.disabled=true;btn.innerHTML='<div class="spinner" style="margin:0 auto"></div>';
+
+  // Delete existing today records for these players to avoid duplicates, then insert
+  const pids=records.map(r=>r.player_id);
+  await sb.from('attendance').delete().eq('session_date',today).in('player_id',pids);
+  const{error}=await sb.from('attendance').insert(records);
+
+  btn.disabled=false;btn.innerHTML='✓ حفظ الحضور';
+  if(error){toast('خطأ: '+error.message,'error');return;}
+  toast(`تم حفظ حضور ${records.length} لاعب ✓`);
+  closeQuickAttendance();
+  if(typeof loadAtt==='function') loadAtt();
+}
 
 async function loadBirthdays(){
   const el=document.getElementById('dash-birthdays');
@@ -2496,6 +2657,38 @@ async function saveCoachTrans(){
   loadCoachFinance();
 }
 
+
+function openEditCoachTrans(t){
+  document.getElementById('ect-id').value=t.id;
+  document.getElementById('ect-type').value=t.trans_type||'سلفة';
+  document.getElementById('ect-amount').value=t.amount||'';
+  document.getElementById('ect-date').value=t.trans_date||'';
+  document.getElementById('ect-notes').value=t.notes||'';
+  openModal('editCoachTransModal');
+}
+
+async function updateCoachTrans(){
+  const id=document.getElementById('ect-id').value;
+  const type=document.getElementById('ect-type').value;
+  const amount=Number(document.getElementById('ect-amount').value);
+  const date=document.getElementById('ect-date').value;
+  if(!amount||!date){toast('يرجى ملء الحقول المطلوبة','error');return;}
+  if(!isValidYear(date)){toast('تاريخ غير صحيح','error');return;}
+  const d=new Date(date);
+  const{error}=await sb.from('coach_transactions').update({
+    trans_type:type,
+    amount:amount,
+    trans_date:date,
+    month:d.getMonth()+1,
+    year:d.getFullYear(),
+    notes:document.getElementById('ect-notes').value||null,
+  }).eq('id',id);
+  if(error){toast('خطأ: '+error.message,'error');return;}
+  toast('تم تعديل المعاملة ✓');
+  closeModal('editCoachTransModal');
+  loadCoachFinance();
+}
+
 async function loadCoachFinance(){
   const monthSel=document.getElementById('cfin-month');
   const yearSel=document.getElementById('cfin-year');
@@ -2537,9 +2730,18 @@ async function loadCoachFinance(){
     const transRows=cTrans.length?cTrans.map(t=>{
       const tColor=t.trans_type==='مكافأة'?'var(--accent-dk)':'var(--red-dk)';
       const sign=t.trans_type==='مكافأة'?'+':'−';
-      return`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid var(--border);font-size:12px">
-        <span style="color:${tColor};font-weight:600">${sign} ${fmt(t.amount)} ج · ${t.trans_type}</span>
-        <span style="color:var(--text3);display:flex;gap:8px;align-items:center">${t.notes||''} <button class="icon-btn danger" style="padding:2px" onclick="deleteRecord('coach_transactions','${t.id}',loadCoachFinance)"><i class="ti ti-trash" style="font-size:13px"></i></button></span>
+      return`<div style="padding:6px 0;border-top:1px solid var(--border);font-size:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="color:${tColor};font-weight:600">${sign} ${fmt(t.amount)} ج · ${t.trans_type}</span>
+          <span style="display:flex;gap:4px;align-items:center">
+            <button class="icon-btn" style="padding:2px" onclick="openEditCoachTrans(_get('${_set(t.id,t)}'))" title="تعديل"><i class="ti ti-edit" style="font-size:13px"></i></button>
+            <button class="icon-btn danger" style="padding:2px" onclick="deleteRecord('coach_transactions','${t.id}',loadCoachFinance)" title="حذف"><i class="ti ti-trash" style="font-size:13px"></i></button>
+          </span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">
+          <span style="color:var(--primary);font-size:11px"><i class="ti ti-calendar" style="font-size:11px"></i> ${fmtDateWithDay(t.trans_date)}</span>
+          ${t.notes?`<span style="color:var(--text3);font-size:11px">${t.notes}</span>`:''}
+        </div>
       </div>`;
     }).join(''):'';
 
@@ -5560,6 +5762,30 @@ initAuth();
       <div class="field full"><label>ملاحظات عامة</label><textarea id="ep-notes"></textarea></div>
     </div></div>
     <div class="modal-foot"><button class="btn" onclick="closeModal('editPlayerModal')">إلغاء</button><button class="btn btn-primary" onclick="updatePlayer()"><i class="ti ti-check"></i> حفظ التعديل</button></div>
+  </div>
+</div>
+
+<!-- EDIT COACH TRANSACTION MODAL -->
+<div id="editCoachTransModal" class="modal-overlay">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head"><span class="modal-title"><i class="ti ti-edit"></i> تعديل المعاملة</span><button class="icon-btn" onclick="closeModal('editCoachTransModal')"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body"><div class="form-grid">
+      <input type="hidden" id="ect-id">
+      <div class="field"><label>النوع *</label>
+        <select id="ect-type">
+          <option value="سلفة">سلفة (تُخصم) 🔻</option>
+          <option value="مكافأة">مكافأة (تُضاف) 🔺</option>
+          <option value="خصم">خصم (يُخصم) 🔻</option>
+        </select>
+      </div>
+      <div class="field"><label>المبلغ (ج) *</label><input id="ect-amount" type="number" min="0"></div>
+      <div class="field full"><label>التاريخ *</label><input id="ect-date" type="date"></div>
+      <div class="field full"><label>السبب / ملاحظة</label><input id="ect-notes" type="text"></div>
+    </div></div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('editCoachTransModal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="updateCoachTrans()"><i class="ti ti-check"></i> حفظ</button>
+    </div>
   </div>
 </div>
 
