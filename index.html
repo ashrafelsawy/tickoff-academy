@@ -563,6 +563,16 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
 .squad-btn.active-sub{background:var(--amber);border-color:var(--amber);color:#fff}
 .squad-btn.active-excluded{background:var(--text3);border-color:var(--text3);color:#fff}
 
+
+/* LINEUP FULLSCREEN */
+#lineupFsOverlay{position:fixed;inset:0;background:#0D1B0F;z-index:9998;display:none;flex-direction:column;padding:16px;overflow-y:auto}
+#lineupFsOverlay.active{display:flex}
+#lineupFsOverlay .lineup-fs-close{position:absolute;top:14px;left:14px;background:rgba(255,255,255,.2);border:none;color:#fff;width:40px;height:40px;border-radius:10px;font-size:18px;cursor:pointer;z-index:2}
+#lineup-fs-body{max-width:900px;margin:auto;width:100%}
+@media (orientation:landscape){#lineup-fs-body{max-width:80vh}}
+
+
+#quickAttOverlay select option{background:#0D1B0F;color:#fff}
 /* QUICK ATTENDANCE MODE */
 #quickAttOverlay{position:fixed;inset:0;background:#0D1B0F;z-index:9999;display:none;flex-direction:column}
 #quickAttOverlay.active{display:flex}
@@ -578,6 +588,12 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
 </style>
 </head>
 <body>
+<!-- LINEUP FULLSCREEN OVERLAY -->
+<div id="lineupFsOverlay">
+  <button class="lineup-fs-close" onclick="closeLineupFullscreen()">✕</button>
+  <div id="lineup-fs-body"></div>
+</div>
+
 <!-- QUICK ATTENDANCE OVERLAY -->
 <div id="quickAttOverlay">
   <div class="qa-header">
@@ -585,9 +601,12 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       <button onclick="closeQuickAttendance()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:36px;height:36px;border-radius:10px;font-size:18px;cursor:pointer">✕</button>
       <div style="font-size:18px;font-weight:800">الوضع السريع</div>
     </div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <div id="qa-date-text" style="font-size:12px;opacity:.85;flex:1"></div>
-      <select id="qa-group" onchange="loadQuickPlayers()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:5px 10px;font-size:13px;font-weight:600">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <div id="qa-date-text" style="font-size:12px;opacity:.85;width:100%"></div>
+      <select id="qa-branch" onchange="loadQuickPlayers()" style="background:#142;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;flex:1">
+        <option value="">كل الفروع</option>
+      </select>
+      <select id="qa-group" onchange="loadQuickPlayers()" style="background:#142;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;flex:1">
         <option value="">كل المجموعات</option>
         <option>تحت 10</option><option>تحت 12</option><option>تحت 14</option><option>تحت 16</option><option>تحت 18</option>
       </select>
@@ -665,7 +684,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:10px;color:rgba(255,255,255,.2);background:rgba(255,255,255,.05);padding:2px 8px;border-radius:10px">v1.6.1 — 26/06/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:10px;color:rgba(255,255,255,.2);background:rgba(255,255,255,.05);padding:2px 8px;border-radius:10px">v1.6.3 — 26/06/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -1642,11 +1661,18 @@ function closeQuickAttendance(){
 
 async function loadQuickPlayers(){
   const group=document.getElementById('qa-group').value;
+  const branch=document.getElementById('qa-branch')?.value||'';
+  // Populate branch filter once
+  const brSel=document.getElementById('qa-branch');
+  if(brSel&&allBranches.length&&brSel.options.length<=1){
+    brSel.innerHTML='<option value="">كل الفروع</option>'+allBranches.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  }
   const list=document.getElementById('qa-list');
   list.innerHTML='<div class="loading"><div class="spinner"></div></div>';
 
   let query=sb.from('players').select('id,first_name,last_name,group_age').eq('status','نشط').order('sort_order',{ascending:true});
   if(group) query=query.eq('group_age',group);
+  if(branch) query=query.eq('branch_id',branch);
   const{data:players}=await query;
 
   if(!players||!players.length){
@@ -3437,30 +3463,47 @@ async function renderLineup(){
     lines[positionLine(p.position)].push({name,pos:p.position});
   });
 
-  // Y positions for each line (in a 400x520 pitch)
-  const lineY={att:75,mid:200,def:340,gk:455};
+  // LANDSCAPE pitch 800x520. Lines go right(own goal/GK) -> left(attack)
+  const lineX={gk:740,def:560,mid:380,att:170};
   const lineColor={gk:'#F5C518',def:'#2D8A3E',mid:'#185FA5',att:'#E03535'};
   const gkTextColor={gk:'#1a1a1a',def:'#fff',mid:'#fff',att:'#fff'};
 
-  // Build circles
   let circles='';
   ['att','mid','def','gk'].forEach(line=>{
     const players=lines[line];
     const n=players.length;
     if(!n) return;
-    const y=lineY[line];
+    const x=lineX[line];
     players.forEach((pl,i)=>{
-      const x=Math.round((400/(n+1))*(i+1));
+      const y=Math.round((520/(n+1))*(i+1));
       const parts=pl.name.split(' ');
       const fn=parts[0]||'';
       const ln=parts[1]||'';
       circles+=`<g>
-        <circle cx="${x}" cy="${y}" r="34" fill="${lineColor[line]}" stroke="#fff" stroke-width="2.5"/>
-        <text x="${x}" y="${ln?y-4:y+4}" text-anchor="middle" font-size="13" font-weight="700" fill="${gkTextColor[line]}">${fn}</text>
+        <circle cx="${x}" cy="${y}" r="36" fill="${lineColor[line]}" stroke="#fff" stroke-width="2.5"/>
+        <text x="${x}" y="${ln?y-4:y+4}" text-anchor="middle" font-size="14" font-weight="700" fill="${gkTextColor[line]}">${fn}</text>
         ${ln?`<text x="${x}" y="${y+13}" text-anchor="middle" font-size="12" font-weight="600" fill="${gkTextColor[line]}">${ln}</text>`:''}
       </g>`;
     });
   });
+
+  // Landscape pitch SVG (reusable)
+  const pitchSvg=`<svg viewBox="0 0 800 520" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:12px;background:#1a7a3c" preserveAspectRatio="xMidYMid meet">
+    <rect x="8" y="8" width="784" height="504" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2" rx="4"/>
+    <line x1="400" y1="8" x2="400" y2="512" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
+    <circle cx="400" cy="260" r="60" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
+    <circle cx="400" cy="260" r="3" fill="rgba(255,255,255,.5)"/>
+    <rect x="8" y="160" width="80" height="200" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
+    <rect x="712" y="160" width="80" height="200" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
+    ${circles}
+  </svg>`;
+
+  const legend=`<div style="display:flex;justify-content:center;gap:14px;margin-top:12px;font-size:12px;flex-wrap:wrap">
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#F5C518"></span> حارس</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#2D8A3E"></span> دفاع</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#185FA5"></span> وسط</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#E03535"></span> هجوم</span>
+  </div>`;
 
   const subsHtml=subs.length?`
     <div style="margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px">
@@ -3475,29 +3518,40 @@ async function renderLineup(){
       </div>
     </div>`:'';
 
+  // Store for fullscreen
+  window._lineupFullscreen={pitchSvg,legend,subsHtml,title:`${match.teams?.name||'—'} vs ${match.opponent}`,sub:`${fmtDate(match.match_date)} · ${match.location||''}`};
+
   el.innerHTML=`
-    <div style="text-align:center;margin-bottom:1rem">
-      <div style="font-size:16px;font-weight:700">${match.teams?.name||'—'} <span style="color:var(--text3)">vs</span> ${match.opponent}</div>
-      <div style="font-size:12px;color:var(--text3)">${fmtDate(match.match_date)} · ${match.location||''}</div>
-    </div>
-    <div style="background:var(--surface-1,#fff);border-radius:12px;padding:1rem;max-width:420px;margin:0 auto">
-      <svg viewBox="0 0 400 520" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:12px;background:#1a7a3c">
-        <rect x="8" y="8" width="384" height="504" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2" rx="4"/>
-        <line x1="8" y1="260" x2="392" y2="260" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
-        <circle cx="200" cy="260" r="48" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
-        <circle cx="200" cy="260" r="3" fill="rgba(255,255,255,.5)"/>
-        <rect x="120" y="8" width="160" height="64" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
-        <rect x="120" y="448" width="160" height="64" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
-        ${circles}
-      </svg>
-      <div style="display:flex;justify-content:center;gap:14px;margin-top:12px;font-size:12px;flex-wrap:wrap">
-        <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#F5C518"></span> حارس</span>
-        <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#2D8A3E"></span> دفاع</span>
-        <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#185FA5"></span> وسط</span>
-        <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#E03535"></span> هجوم</span>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:16px;font-weight:700">${match.teams?.name||'—'} <span style="color:var(--text3)">vs</span> ${match.opponent}</div>
+        <div style="font-size:12px;color:var(--text3)">${fmtDate(match.match_date)} · ${match.location||''}</div>
       </div>
+      <button class="btn btn-primary btn-sm" onclick="openLineupFullscreen()"><i class="ti ti-maximize"></i> ملء الشاشة</button>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem">
+      ${pitchSvg}
+      ${legend}
       ${subsHtml}
     </div>`;
+}
+
+function openLineupFullscreen(){
+  const d=window._lineupFullscreen;
+  if(!d) return;
+  const ov=document.getElementById('lineupFsOverlay');
+  document.getElementById('lineup-fs-body').innerHTML=`
+    <div style="text-align:center;margin-bottom:10px;color:#fff">
+      <div style="font-size:18px;font-weight:800">${d.title}</div>
+      <div style="font-size:12px;opacity:.7">${d.sub}</div>
+    </div>
+    ${d.pitchSvg}
+    ${d.legend}
+    ${d.subsHtml||''}`;
+  ov.classList.add('active');
+}
+function closeLineupFullscreen(){
+  document.getElementById('lineupFsOverlay').classList.remove('active');
 }
 
 function switchAddPlayerTab(tab){
