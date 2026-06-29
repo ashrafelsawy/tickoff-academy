@@ -573,6 +573,16 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
 
 
 #quickAttOverlay select option{background:#0D1B0F;color:#fff}
+
+/* QUICK PLAYER MODE */
+#quickPlayerOverlay{position:fixed;inset:0;background:#0D1B0F;z-index:9999;display:none;flex-direction:column}
+#quickPlayerOverlay.active{display:flex}
+#quickPlayerOverlay select option{background:#0D1B0F;color:#fff}
+.qp-field{margin-bottom:14px}
+.qp-field label{display:block;font-size:13px;font-weight:600;color:#9aa;margin-bottom:6px}
+.qp-field input,.qp-field select{width:100%;background:#142;border:1.5px solid rgba(255,255,255,.2);color:#fff;border-radius:12px;padding:14px;font-size:16px;font-weight:600;box-sizing:border-box}
+.qp-field input:focus,.qp-field select:focus{outline:none;border-color:#6DC82A}
+
 /* QUICK ATTENDANCE MODE */
 #quickAttOverlay{position:fixed;inset:0;background:#0D1B0F;z-index:9999;display:none;flex-direction:column}
 #quickAttOverlay.active{display:flex}
@@ -592,6 +602,33 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
 <div id="lineupFsOverlay">
   <button class="lineup-fs-close" onclick="closeLineupFullscreen()">✕</button>
   <div id="lineup-fs-body"></div>
+</div>
+
+<!-- QUICK PLAYER OVERLAY -->
+<div id="quickPlayerOverlay">
+  <div class="qa-header" style="flex-shrink:0">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <button onclick="closeQuickPlayer()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:36px;height:36px;border-radius:10px;font-size:18px;cursor:pointer">✕</button>
+      <div style="font-size:18px;font-weight:800">⚡ تعريف لاعب سريع</div>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch">
+    <div class="qp-field"><label>الاسم الأول *</label><input id="qp-fname" type="text" placeholder="محمد"></div>
+    <div class="qp-field"><label>اسم العائلة *</label><input id="qp-lname" type="text" placeholder="أحمد"></div>
+    <div class="qp-field"><label>اسم ولي الأمر</label><input id="qp-parent" type="text" placeholder="أحمد محمود"></div>
+    <div class="qp-field"><label>رقم تليفون ولي الأمر</label><input id="qp-phone" type="tel" placeholder="010xxxxxxxx"></div>
+    <div class="qp-field"><label>المجموعة *</label>
+      <select id="qp-group">
+        <option value="">اختر المجموعة...</option>
+        <option>تحت 10</option><option>تحت 12</option><option>تحت 14</option><option>تحت 16</option><option>تحت 18</option>
+      </select>
+    </div>
+    <div class="qp-field"><label>الفرع</label><select id="qp-branch"><option value="">اختر الفرع...</option></select></div>
+  </div>
+  <div style="padding:14px;background:#0D1B0F;flex-shrink:0;display:flex;flex-direction:column;gap:8px">
+    <button onclick="saveQuickPlayer(true)" style="width:100%;background:#1a3a1f;border:1.5px solid #2D8A3E;border-radius:14px;padding:14px;font-size:15px;font-weight:700;color:#6DC82A;cursor:pointer"><i class="ti ti-user-plus"></i> حفظ وإضافة آخر</button>
+    <button onclick="saveQuickPlayer(false)" id="qp-save-btn" style="width:100%;background:#6DC82A;border:none;border-radius:14px;padding:16px;font-size:17px;font-weight:800;color:#0D1B0F;cursor:pointer">✓ حفظ</button>
+  </div>
 </div>
 
 <!-- QUICK ATTENDANCE OVERLAY -->
@@ -684,7 +721,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:10px;color:rgba(255,255,255,.2);background:rgba(255,255,255,.05);padding:2px 8px;border-radius:10px">v1.6.3 — 26/06/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:10px;color:rgba(255,255,255,.2);background:rgba(255,255,255,.05);padding:2px 8px;border-radius:10px">v1.7.2 — 26/06/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -1063,9 +1100,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       <!-- TEAMS BY AGE GROUP TAB -->
       <div id="teams-list-tab">
         <div class="filter-bar" style="margin-bottom:1.25rem">
-          <select id="teams-season-filter" onchange="loadTeamsByAge()" style="width:150px">
-            <option value="2024-2025">موسم 2024-2025</option>
-            <option value="2023-2024">موسم 2023-2024</option>
+          <select id="teams-season-filter" onchange="loadTeamsByAge()" style="width:150px;font-weight:700;color:var(--primary)">
           </select>
           <select id="teams-branch-filter" onchange="loadTeamsByAge()" style="width:140px">
             <option value="">كل الفروع</option>
@@ -1085,6 +1120,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
           <div class="stat-mini"><div class="stat-mini-label">خسائر</div><div class="stat-mini-val" id="mt-losses" style="color:var(--red-dk)">—</div></div>
         </div>
         <div class="filter-bar">
+          <select id="season-filter" onchange="onSeasonChange()" style="width:150px;font-weight:700;color:var(--primary)"></select>
           <select id="mt-team-filter" onchange="loadMatches()" style="width:180px"><option value="">كل الفرق</option></select>
           <button class="btn btn-primary" style="margin-right:auto" onclick="openModal('matchModal');loadTeamSelectForMatch()"><i class="ti ti-plus"></i> إضافة مباراة</button>
         </div>
@@ -1115,6 +1151,12 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
 
       <!-- MANAGE TEAMS TAB -->
       <div id="teams-manage-tab" style="display:none">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:8px"><i class="ti ti-calendar-event" style="color:var(--primary)"></i><span style="font-weight:700;font-size:14px">الموسم الحالي:</span></div>
+          <select id="season-manage-select" onchange="onSeasonChange()" style="width:160px;font-weight:700;color:var(--primary)"></select>
+          <button class="btn btn-sm" onclick="openAddSeason()"><i class="ti ti-plus"></i> موسم جديد</button>
+          <button class="btn btn-sm danger" style="margin-right:auto" onclick="deleteSeasonData()"><i class="ti ti-trash"></i> مسح بيانات الموسم القديم</button>
+        </div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:1.5rem" id="teams-grid">
           <div class="loading"><div class="spinner"></div></div>
         </div>
@@ -1561,7 +1603,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 const PAGES={
   dashboard:{title:'الداشبورد',sub:'أكاديمية Tick Off — موسم 2024-2025',actions:''},
-  players:{title:'اللاعبون',sub:'إدارة اللاعبين المسجلين',actions:'<button class="btn btn-primary" onclick="openModal(\'playerModal\');loadCoachSelect()"><i class="ti ti-plus"></i> لاعب جديد</button>'},
+  players:{title:'اللاعبون',sub:'إدارة اللاعبين المسجلين',actions:'<button class="btn btn-primary" onclick="openQuickPlayer()" style="background:linear-gradient(135deg,#1A5C2A,#2D8A3E)"><i class="ti ti-bolt"></i> تعريف سريع</button> <button class="btn" onclick="openModal(\'playerModal\');loadCoachSelect()"><i class="ti ti-plus"></i> لاعب جديد</button>'},
   coaches:{title:'المدربون',sub:'إدارة المدربين',actions:'<button class="btn btn-primary" onclick="openModal(\'coachModal\')"><i class="ti ti-plus"></i> مدرب جديد</button>'},
   subscriptions:{title:'الاشتراكات',sub:'إدارة المدفوعات',actions:'<button class="btn btn-primary" onclick="openModal(\'subModal\');loadPlayerSelect(\'s-player\')"><i class="ti ti-plus"></i> تسجيل دفعة</button>'},
   attendance:{title:'الحضور',sub:'سجل الحضور والغياب',actions:'<button class="btn btn-primary" onclick="openQuickAttendance()" style="background:linear-gradient(135deg,#1A5C2A,#2D8A3E)"><i class="ti ti-bolt"></i> الوضع السريع</button> <button class="btn" onclick="openModal(\'attModal\');loadPlayerSelect(\'a-player\');autoSetToday(\'a-date\');setTimeout(()=>showDayName(\'a-date\',\'a-day-name\'),50)"><i class="ti ti-plus"></i> تسجيل فردي</button>'},
@@ -1596,7 +1638,7 @@ function navigate(s){
   if(s==='expenses'){populateBranchSelects();loadExp();}
   if(s==='schedule')loadSchedule();
   if(s==='store')loadProducts();
-  if(s==='teams'){loadTeamsByAge();populateBranchSelects();}
+  if(s==='teams'){refreshSeasonsFromData();loadTeamsByAge();populateBranchSelects();}
   if(s==='month_report')loadMonthReport();
   if(s==='equipment')loadEquipment();
   if(s==='evaluations')loadEvaluations();
@@ -1642,6 +1684,61 @@ async function checkConn(){
 // QUICK ATTENDANCE MODE (mobile-first)
 // ============================================================
 let quickAttState={};  // playerId -> 'present'|'absent'|null
+
+// ============================================================
+// QUICK PLAYER (fast registration - mobile-first)
+// ============================================================
+async function openQuickPlayer(){
+  document.getElementById('quickPlayerOverlay').classList.add('active');
+  // Populate branches
+  if(!allBranches.length){const{data:brs}=await sb.from('branches').select('id,name');if(brs)allBranches=brs;}
+  const brSel=document.getElementById('qp-branch');
+  if(brSel&&allBranches.length){
+    brSel.innerHTML='<option value="">اختر الفرع...</option>'+allBranches.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  }
+  clearQuickPlayerFields();
+}
+
+function closeQuickPlayer(){
+  document.getElementById('quickPlayerOverlay').classList.remove('active');
+  loadPlayers();
+}
+
+function clearQuickPlayerFields(){
+  ['qp-fname','qp-lname','qp-parent','qp-phone'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('qp-group').value='';
+  // keep branch selected for the queue
+  setTimeout(()=>document.getElementById('qp-fname').focus(),100);
+}
+
+async function saveQuickPlayer(addAnother){
+  const fn=document.getElementById('qp-fname').value.trim();
+  const ln=document.getElementById('qp-lname').value.trim();
+  const group=document.getElementById('qp-group').value;
+  if(!fn||!ln){toast('الاسم الأول والعائلة مطلوبان','error');return;}
+  if(!group){toast('اختر المجموعة','error');return;}
+
+  const btn=document.getElementById('qp-save-btn');
+  btn.disabled=true;
+
+  const{error}=await sb.from('players').insert({
+    first_name:fn,last_name:ln,group_age:group,
+    parent_name:document.getElementById('qp-parent').value||null,
+    parent_phone:document.getElementById('qp-phone').value||null,
+    branch_id:document.getElementById('qp-branch').value||null,
+    status:'نشط',
+  });
+
+  btn.disabled=false;
+  if(error){toast('خطأ: '+error.message,'error');return;}
+  toast(`تم تسجيل ${fn} ${ln} ✓`);
+
+  if(addAnother){
+    clearQuickPlayerFields();  // keep overlay open, branch stays
+  }else{
+    closeQuickPlayer();
+  }
+}
 
 function openQuickAttendance(){
   document.getElementById('quickAttOverlay').classList.add('active');
@@ -2295,6 +2392,7 @@ async function loadMatches(){
 
   let query=sb.from('matches').select('*,teams(name,group_age)').order('match_date',{ascending:false});
   if(teamId) query=query.eq('team_id',teamId);
+  if(currentSeason) query=query.eq('season',currentSeason);
   const{data:matches}=await query;
 
   // Stats
@@ -2357,6 +2455,7 @@ async function saveMatch(){
     team_id:teamId,opponent,match_date:date,
     location:document.getElementById('mc-location').value||null,
     our_score:ourScore,opponent_score:oppScore,result,
+    season:currentSeason,
     notes:document.getElementById('mc-notes').value||null,
   });
   if(error){toast('خطأ: '+error.message,'error');return;}
@@ -3284,7 +3383,12 @@ let currentTeamId = null;
 
 // ---- TEAMS BY AGE GROUP ----
 async function loadTeamsByAge(){
-  const season=document.getElementById('teams-season-filter')?.value||'2024-2025';
+  // Populate season filter dynamically
+  const ssel=document.getElementById('teams-season-filter');
+  if(ssel){
+    ssel.innerHTML=allSeasons.map(s=>`<option value="${s}" ${s===currentSeason?'selected':''}>موسم ${s}</option>`).join('');
+  }
+  const season=document.getElementById('teams-season-filter')?.value||currentSeason;
   const branchId=document.getElementById('teams-branch-filter')?.value||'';
   const container=document.getElementById('teams-by-age-container');
   if(!container) return;
@@ -3562,8 +3666,109 @@ function switchAddPlayerTab(tab){
   if(tab==='external') searchExternalForTeam();
 }
 
+// ============================================================
+// SEASONS MANAGEMENT
+// ============================================================
+let currentSeason=localStorage.getItem('currentSeason')||'2026-2027';
+let allSeasons=JSON.parse(localStorage.getItem('allSeasons')||'null')||['2024-2025','2025-2026','2026-2027'];
+
+function saveSeasons(){
+  localStorage.setItem('allSeasons',JSON.stringify(allSeasons));
+  localStorage.setItem('currentSeason',currentSeason);
+}
+
+async function refreshSeasonsFromData(){
+  // Pull any seasons that exist in DB so we don't miss any
+  const[{data:t},{data:m}]=await Promise.all([
+    sb.from('teams').select('season'),
+    sb.from('matches').select('season'),
+  ]);
+  const set=new Set(allSeasons);
+  (t||[]).forEach(r=>{if(r.season)set.add(r.season);});
+  (m||[]).forEach(r=>{if(r.season)set.add(r.season);});
+  allSeasons=Array.from(set).sort().reverse();
+  saveSeasons();
+  populateSeasonSelectors();
+}
+
+function populateSeasonSelectors(){
+  ['season-filter','season-manage-select'].forEach(id=>{
+    const sel=document.getElementById(id);
+    if(!sel) return;
+    sel.innerHTML=allSeasons.map(s=>`<option value="${s}" ${s===currentSeason?'selected':''}>${s}</option>`).join('');
+  });
+}
+
+function onSeasonChange(){
+  const v=(document.getElementById('season-manage-select')?.value)||(document.getElementById('season-filter')?.value);
+  if(v){currentSeason=v;saveSeasons();populateSeasonSelectors();}
+  loadTeams();
+  loadMatches();
+  loadTeamsByAge();
+}
+
+function openAddSeason(){
+  document.getElementById('new-season-input').value='';
+  openModal('addSeasonModal');
+}
+
+function confirmAddSeason(){
+  const name=document.getElementById('new-season-input').value;
+  if(!name) return;
+  const clean=name.trim();
+  if(!/^\d{4}-\d{4}$/.test(clean)){toast('الصيغة غير صحيحة — استخدم مثل 2027-2028','error');return;}
+  if(allSeasons.includes(clean)){
+    currentSeason=clean;saveSeasons();populateSeasonSelectors();
+    closeModal('addSeasonModal');
+    toast('هذا الموسم موجود — تم اختياره');
+    loadTeams();loadMatches();
+    return;
+  }
+  allSeasons.unshift(clean);
+  currentSeason=clean;
+  saveSeasons();
+  populateSeasonSelectors();
+  closeModal('addSeasonModal');
+  toast(`تم إضافة موسم ${clean} ✓`);
+  loadTeams();loadMatches();
+}
+
+async function deleteSeasonData(){
+  const target=currentSeason;
+  if(allSeasons.length<=1){toast('لا يمكن حذف الموسم الوحيد','error');return;}
+  if(!confirm(`⚠️ تحذير: سيتم حذف كل الفرق والمباريات الخاصة بموسم ${target} نهائياً.\n\nاللاعبون واشتراكاتهم لن تتأثر.\n\nهل أنت متأكد؟`)) return;
+  if(!confirm(`تأكيد أخير: حذف بيانات موسم ${target} لا يمكن التراجع عنه. متابعة؟`)) return;
+
+  // Delete matches (and their squads/ratings cascade) then teams for this season
+  const{data:seasonMatches}=await sb.from('matches').select('id').eq('season',target);
+  const matchIds=(seasonMatches||[]).map(m=>m.id);
+  if(matchIds.length){
+    await sb.from('match_squad').delete().in('match_id',matchIds);
+    await sb.from('match_player_ratings').delete().in('match_id',matchIds);
+  }
+  await sb.from('matches').delete().eq('season',target);
+
+  const{data:seasonTeams}=await sb.from('teams').select('id').eq('season',target);
+  const teamIds=(seasonTeams||[]).map(t=>t.id);
+  if(teamIds.length){
+    await sb.from('team_players').delete().in('team_id',teamIds);
+  }
+  await sb.from('teams').delete().eq('season',target);
+
+  // Remove season from list, switch to newest remaining
+  allSeasons=allSeasons.filter(s=>s!==target);
+  currentSeason=allSeasons[0];
+  saveSeasons();
+  populateSeasonSelectors();
+  toast(`تم حذف بيانات موسم ${target} ✓`);
+  loadTeams();loadMatches();loadTeamsByAge();
+}
+
 async function loadTeams(){
-  const{data:teams}=await sb.from('teams').select('*,coaches(name),branches(name)').order('created_at',{ascending:false});
+  populateSeasonSelectors();
+  let tq=sb.from('teams').select('*,coaches(name),branches(name)').order('created_at',{ascending:false});
+  if(currentSeason) tq=tq.eq('season',currentSeason);
+  const{data:teams}=await tq;
   const{data:teamPlayers}=await sb.from('team_players').select('team_id');
 
   // Count players per team
@@ -3619,7 +3824,7 @@ async function saveTeam(){
   const{error}=await sb.from('teams').insert({
     name,
     group_age:document.getElementById('tm-age').value||null,
-    season:document.getElementById('tm-season').value||'2024-2025',
+    season:currentSeason||'2026-2027',
     coach_id:document.getElementById('tm-coach').value||null,
     branch_id:document.getElementById('tm-branch').value||null,
   });
@@ -5672,13 +5877,29 @@ initAuth();
   </div>
 </div>
 <!-- TEAM MODAL -->
+<!-- ADD SEASON MODAL -->
+<div id="addSeasonModal" class="modal-overlay">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head"><span class="modal-title"><i class="ti ti-calendar-plus"></i> إضافة موسم جديد</span><button class="icon-btn" onclick="closeModal('addSeasonModal')"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body"><div class="form-grid">
+      <div class="field full"><label>اسم الموسم *</label><input id="new-season-input" type="text" placeholder="مثال: 2027-2028"></div>
+      <div class="field full"><div style="font-size:12px;color:var(--text3)">الصيغة: سنة-سنة (مثل 2027-2028)</div></div>
+    </div></div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('addSeasonModal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="confirmAddSeason()"><i class="ti ti-check"></i> إضافة</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD SEASON MODAL END -->
 <div id="teamModal" class="modal-overlay">
   <div class="modal">
     <div class="modal-head"><span class="modal-title"><i class="ti ti-tournament"></i> إنشاء فريق دوري جديد</span><button class="icon-btn" onclick="closeModal('teamModal')"><i class="ti ti-x"></i></button></div>
     <div class="modal-body"><div class="form-grid">
       <div class="field full"><label>اسم الفريق *</label><input id="tm-name" type="text" placeholder="مثال: فريق Tick Off تحت 14"></div>
       <div class="field"><label>الفئة العمرية</label><select id="tm-age"><option value="">اختر...</option><option>تحت 10</option><option>تحت 12</option><option>تحت 14</option><option>تحت 16</option><option>تحت 18</option></select></div>
-      <div class="field"><label>الموسم</label><input id="tm-season" type="text" value="2024-2025"></div>
+      <div class="field"><label>الموسم</label><input id="tm-season" type="text" value="2026-2027" readonly style="background:var(--bg);color:var(--primary);font-weight:700"></div>
       <div class="field"><label>المدرب</label><select id="tm-coach"><option value="">اختر مدرب...</option></select></div>
       <div class="field"><label>الفرع</label><select id="tm-branch"><option value="">اختر فرع...</option></select></div>
     </div></div>
