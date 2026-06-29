@@ -677,6 +677,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
     </div>
     <div class="nav-section">
       <div class="nav-label">العمليات اليومية</div>
+      <div class="nav-item" data-screen="field_mode"><div class="nav-icon-box" style="background:#0D2A12;color:#6DC82A"><i class="ti ti-bolt"></i></div><span class="nav-text">في الملعب</span></div>
       <div class="nav-item" data-screen="attendance"><div class="nav-icon-box" style="background:#0A1E12;color:#2D8A3E"><i class="ti ti-clipboard-check"></i></div><span class="nav-text">الحضور</span></div>
       <div class="nav-item" data-screen="schedule"><div class="nav-icon-box" style="background:#1A0A35;color:#8B5CF6"><i class="ti ti-calendar"></i></div><span class="nav-text">الجدول</span></div>
       <div class="nav-item" data-screen="evaluations"><div class="nav-icon-box" style="background:#2A2000;color:#F5C518"><i class="ti ti-star"></i></div><span class="nav-text">التقييمات</span></div>
@@ -721,7 +722,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:10px;color:rgba(255,255,255,.2);background:rgba(255,255,255,.05);padding:2px 8px;border-radius:10px">v1.7.2 — 26/06/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.8.1 — 30/06/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -928,6 +929,28 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
         </div>
         <div id="league-subs-list">
           <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FIELD MODE (في الملعب) -->
+    <div id="screen-field_mode" class="screen">
+      <div style="max-width:600px;margin:0 auto">
+        <div style="text-align:center;margin-bottom:1.5rem">
+          <div style="font-size:15px;color:var(--text3)">أدوات سريعة للاستخدام في الملعب من الموبايل</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr;gap:14px">
+          <button onclick="openQuickAttendance()" style="display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,#0f2e16,#1A5C2A);border:1.5px solid #2D8A3E;border-radius:18px;padding:22px;cursor:pointer;text-align:right;width:100%">
+            <div style="width:56px;height:56px;border-radius:16px;background:#6DC82A;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-clipboard-check" style="font-size:28px;color:#0D1B0F"></i></div>
+            <div style="flex:1"><div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:3px">الحضور السريع</div><div style="font-size:13px;color:rgba(255,255,255,.6)">سجّل حضور اللاعبين بضغطة واحدة لكل لاعب</div></div>
+            <i class="ti ti-chevron-left" style="font-size:24px;color:rgba(255,255,255,.4)"></i>
+          </button>
+
+          <button onclick="openQuickPlayer()" style="display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,#0A1E35,#185FA5);border:1.5px solid #4A9EE0;border-radius:18px;padding:22px;cursor:pointer;text-align:right;width:100%">
+            <div style="width:56px;height:56px;border-radius:16px;background:#4A9EE0;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-user-plus" style="font-size:28px;color:#fff"></i></div>
+            <div style="flex:1"><div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:3px">تعريف لاعب سريع</div><div style="font-size:13px;color:rgba(255,255,255,.6)">سجّل لاعب جديد بالبيانات الأساسية بسرعة</div></div>
+            <i class="ti ti-chevron-left" style="font-size:24px;color:rgba(255,255,255,.4)"></i>
+          </button>
         </div>
       </div>
     </div>
@@ -1603,6 +1626,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 const PAGES={
   dashboard:{title:'الداشبورد',sub:'أكاديمية Tick Off — موسم 2024-2025',actions:''},
+  field_mode:{title:'في الملعب',sub:'أدوات سريعة',actions:''},
   players:{title:'اللاعبون',sub:'إدارة اللاعبين المسجلين',actions:'<button class="btn btn-primary" onclick="openQuickPlayer()" style="background:linear-gradient(135deg,#1A5C2A,#2D8A3E)"><i class="ti ti-bolt"></i> تعريف سريع</button> <button class="btn" onclick="openModal(\'playerModal\');loadCoachSelect()"><i class="ti ti-plus"></i> لاعب جديد</button>'},
   coaches:{title:'المدربون',sub:'إدارة المدربين',actions:'<button class="btn btn-primary" onclick="openModal(\'coachModal\')"><i class="ti ti-plus"></i> مدرب جديد</button>'},
   subscriptions:{title:'الاشتراكات',sub:'إدارة المدفوعات',actions:'<button class="btn btn-primary" onclick="openModal(\'subModal\');loadPlayerSelect(\'s-player\')"><i class="ti ti-plus"></i> تسجيل دفعة</button>'},
@@ -1630,10 +1654,11 @@ function navigate(s){
   document.getElementById('pageTitle').textContent=p.title;
   document.getElementById('pageSub').textContent=p.sub;
   document.getElementById('topbarActions').innerHTML=p.actions;
+  if(s==='field_mode')populateBranchSelects();
   if(s==='dashboard')loadDashboard();
   if(s==='players'){populateBranchSelects();loadPlayers();}
   if(s==='coaches')loadCoaches();
-  if(s==='subscriptions')loadSubs();
+  if(s==='subscriptions'){populateBranchSelects();loadSubs();}
   if(s==='attendance'){populateBranchSelects();loadAtt();}
   if(s==='expenses'){populateBranchSelects();loadExp();}
   if(s==='schedule')loadSchedule();
@@ -2091,10 +2116,10 @@ async function loadSubs(p){if(p)subPage=p;
 
   if(s==='متأخر'){
     // "متأخر" = expired subscriptions + players with no subscription record at all
-    let expiredQuery=sb.from('subscriptions').select('*,players(first_name,last_name)').lt('expires_at',today);
-    let activeQuery=sb.from('subscriptions').select('player_id').gte('expires_at',today);
+    let expiredQuery=sb.from('subscriptions').select('*,players!inner(first_name,last_name,branch_id)').lt('expires_at',today);
+    let activeQuery=sb.from('subscriptions').select('player_id,players!inner(branch_id)').gte('expires_at',today);
     let playersQuery=sb.from('players').select('id,first_name,last_name').eq('status','نشط');
-    if(branchId){expiredQuery=expiredQuery.eq('branch_id',branchId);activeQuery=activeQuery.eq('branch_id',branchId);playersQuery=playersQuery.eq('branch_id',branchId);}
+    if(branchId){expiredQuery=expiredQuery.eq('players.branch_id',branchId);activeQuery=activeQuery.eq('players.branch_id',branchId);playersQuery=playersQuery.eq('branch_id',branchId);}
     const[{data:expiredSubs},{data:allPlayers},{data:activeSubs}]=await Promise.all([expiredQuery,playersQuery,activeQuery]);
     const coveredIds=new Set((activeSubs||[]).map(x=>x.player_id));
     const expiredPlayerIds=new Set((expiredSubs||[]).map(x=>x.player_id));
@@ -2105,9 +2130,9 @@ async function loadSubs(p){if(p)subPage=p;
     count=merged.length;
     data=merged.slice((subPage-1)*pp,subPage*pp);
   } else {
-    let query=sb.from('subscriptions').select('*,players(first_name,last_name)',{count:'exact'}).order('created_at',{ascending:false}).range((subPage-1)*pp,subPage*pp-1);
+    let query=sb.from('subscriptions').select('*,players!inner(first_name,last_name,branch_id)',{count:'exact'}).order('created_at',{ascending:false}).range((subPage-1)*pp,subPage*pp-1);
     if(s) query=query.eq('status',s);
-    if(branchId) query=query.eq('branch_id',branchId);
+    if(branchId) query=query.eq('players.branch_id',branchId);
     const res=await query; data=res.data; count=res.count;
   }
 
