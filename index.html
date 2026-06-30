@@ -722,7 +722,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.8.1 — 30/06/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.8.3 — 30/06/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -2259,11 +2259,10 @@ async function deleteRecord(table,id,reload){
 
 // ---- AUTH & ROLES ----
 const ROLE_MENUS = {
-  system_admin:  ['dashboard','store','players','coaches','subscriptions','attendance','expenses','schedule','teams','team_detail','evaluations','equipment','parent_view','player_card','month_report','settings','reports'],
-  captain_admin: ['dashboard','store','players','coaches','subscriptions','attendance','expenses','schedule','teams','team_detail','evaluations','equipment','parent_view','player_card','month_report','reports'],
-  coach:         ['dashboard','attendance','schedule','teams','team_detail','evaluations','parent_view'],
-  coach:         ['dashboard','attendance','schedule','evaluations','parent_view'],
-  admin_staff:   ['dashboard','attendance','subscriptions','expenses'],
+  system_admin:  ['dashboard','field_mode','store','players','coaches','subscriptions','attendance','expenses','schedule','teams','team_detail','evaluations','equipment','parent_view','player_card','month_report','settings','reports'],
+  captain_admin: ['dashboard','field_mode','store','players','coaches','subscriptions','attendance','expenses','schedule','teams','team_detail','evaluations','equipment','parent_view','player_card','month_report','reports'],
+  coach:         ['dashboard','field_mode','attendance','schedule','teams','team_detail','evaluations','parent_view'],
+  admin_staff:   ['dashboard','field_mode','attendance','subscriptions','expenses'],
 };
 
 const ROLE_LABELS = {
@@ -2312,11 +2311,12 @@ async function onLogin(user){
 }
 
 function applyRoleUI(role, name){
-  // Show/hide nav items
+  // Show/hide nav items. system_admin sees EVERYTHING automatically.
+  const isSuperAdmin = role==='system_admin';
   const allowed = ROLE_MENUS[role] || [];
   document.querySelectorAll('.nav-item[data-screen]').forEach(item => {
     const screen = item.dataset.screen;
-    item.classList.toggle('hidden', !allowed.includes(screen));
+    item.classList.toggle('hidden', isSuperAdmin ? false : !allowed.includes(screen));
   });
 
   // Add user info to topbar
@@ -2351,7 +2351,8 @@ function applyRoleUI(role, name){
     if(sidebarRole) sidebarRole.textContent=ROLE_LABELS[role]||role;
   }
   // Navigate to first allowed screen
-  if(allowed.length) navigate(allowed[0]);
+  if(isSuperAdmin) navigate('dashboard');
+  else if(allowed.length) navigate(allowed[0]);
 }
 
 async function doLogout(){
