@@ -722,7 +722,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.8.3 — 30/06/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.8.5 — 30/06/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -759,12 +759,31 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
 
     <!-- DASHBOARD -->
     <div id="screen-dashboard" class="screen active">
-      <div class="kpi-grid">
+      <div class="kpi-grid" id="kpi-grid-main">
         <div class="kpi"><div class="kpi-label"><i class="ti ti-users"></i> اللاعبون</div><div class="kpi-value" id="kpi-players">—</div><div class="kpi-delta delta-up" id="kpi-players-sub"></div></div>
-        <div class="kpi kpi-revenue"><div class="kpi-label"><i class="ti ti-trending-up"></i> الإيرادات</div><div class="kpi-value" id="kpi-revenue">—</div><div class="kpi-delta delta-up" id="kpi-revenue-breakdown" style="font-size:11px"><i class="ti ti-arrow-up" style="font-size:10px"></i> هذا الشهر</div></div>
-        <div class="kpi kpi-expenses"><div class="kpi-label"><i class="ti ti-trending-down"></i> المصروفات</div><div class="kpi-value" id="kpi-expenses">—</div><div class="kpi-delta delta-down"><i class="ti ti-arrow-down" style="font-size:10px"></i> هذا الشهر</div></div>
-        <div class="kpi kpi-net"><div class="kpi-label"><i class="ti ti-scale"></i> صافي الشهر</div><div class="kpi-value" id="kpi-net">—</div><div class="kpi-delta" id="kpi-net-sub"></div></div>
       </div>
+
+      <!-- LOCKED FINANCE CARD (captain/admin only) -->
+      <div id="finance-locked-card" style="display:none;margin-bottom:1rem">
+        <div onclick="toggleFinance()" style="cursor:pointer;background:linear-gradient(135deg,var(--dark2,#162A19),var(--dark3,#1E3A22));border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:52px;height:52px;border-radius:14px;background:rgba(109,200,42,.15);display:flex;align-items:center;justify-content:center"><i class="ti ti-lock" id="finance-lock-icon" style="font-size:26px;color:var(--accent)"></i></div>
+            <div>
+              <div style="font-size:18px;font-weight:800">الماليات</div>
+              <div style="font-size:12px;color:var(--text3)" id="finance-hint">اضغط لعرض التفاصيل</div>
+            </div>
+          </div>
+          <i class="ti ti-chevron-down" id="finance-chevron" style="font-size:24px;color:var(--text3);transition:transform .3s"></i>
+        </div>
+        <div id="finance-details" style="display:none;margin-top:12px">
+          <div class="kpi-grid">
+            <div class="kpi kpi-revenue"><div class="kpi-label"><i class="ti ti-trending-up"></i> الإيرادات</div><div class="kpi-value" id="kpi-revenue">—</div><div class="kpi-delta delta-up" id="kpi-revenue-breakdown" style="font-size:11px"><i class="ti ti-arrow-up" style="font-size:10px"></i> هذا الشهر</div></div>
+            <div class="kpi kpi-expenses"><div class="kpi-label"><i class="ti ti-trending-down"></i> المصروفات</div><div class="kpi-value" id="kpi-expenses">—</div><div class="kpi-delta delta-down"><i class="ti ti-arrow-down" style="font-size:10px"></i> هذا الشهر</div></div>
+            <div class="kpi kpi-net"><div class="kpi-label"><i class="ti ti-scale"></i> صافي الشهر</div><div class="kpi-value" id="kpi-net">—</div><div class="kpi-delta" id="kpi-net-sub"></div></div>
+          </div>
+        </div>
+      </div>
+
       <div id="dash-player-month" style="margin-bottom:1rem"></div>
       <div id="dash-birthdays" style="margin-bottom:1rem"></div>
       <div style="display:grid;grid-template-columns:1fr 280px;gap:14px">
@@ -901,7 +920,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
         <select id="sub-branch" onchange="loadSubs()" style="width:130px"><option value="">كل الفروع</option></select>
       </div>
       <div class="table-wrap">
-        <table><thead><tr><th>اللاعب</th><th>الخطة</th><th>المبلغ</th><th>تاريخ الدفع</th><th>الانتهاء</th><th>طريقة الدفع</th><th>الحالة</th><th></th></tr></thead>
+        <table><thead><tr><th>اللاعب</th><th>الخطة</th><th>المبلغ</th><th onclick="toggleSubSort()" style="cursor:pointer;user-select:none" title="اضغط لتغيير الترتيب">تاريخ الدفع <i class="ti ti-arrows-sort" id="sub-sort-icon" style="font-size:13px;vertical-align:middle"></i></th><th>الانتهاء</th><th>طريقة الدفع</th><th>الحالة</th><th></th></tr></thead>
         <tbody id="sub-table"><tr><td colspan="8"><div class="loading"><div class="spinner"></div></div></td></tr></tbody></table>
         <div class="pg-wrap"><span class="pg-info" id="sub-pginfo"></span><div class="pg-btns" id="sub-pgbtns"></div></div>
       </div>
@@ -1938,8 +1957,30 @@ async function loadBirthdays(){
     </div>`;
 }
 
+function toggleFinance(){
+  const details=document.getElementById('finance-details');
+  const chevron=document.getElementById('finance-chevron');
+  const lockIcon=document.getElementById('finance-lock-icon');
+  const hint=document.getElementById('finance-hint');
+  const isOpen=details.style.display!=='none';
+  if(isOpen){
+    details.style.display='none';
+    chevron.style.transform='rotate(0deg)';
+    lockIcon.className='ti ti-lock';
+    hint.textContent='اضغط لعرض التفاصيل';
+  }else{
+    details.style.display='block';
+    chevron.style.transform='rotate(180deg)';
+    lockIcon.className='ti ti-lock-open';
+    hint.textContent='اضغط للإخفاء';
+  }
+}
+
 async function loadDashboard(){
   loadBirthdays();
+  // Show finance card only for captain_admin / system_admin
+  const fc=document.getElementById('finance-locked-card');
+  if(fc){fc.style.display=(currentRole==='captain_admin'||currentRole==='system_admin')?'block':'none';}
   const[{count:pc},{data:subs},{data:exps},{data:leaguePays}]=await Promise.all([
     sb.from('players').select('*',{count:'exact',head:true}),
     sb.from('subscriptions').select('amount,paid_at'),
@@ -2109,7 +2150,11 @@ async function loadPlayerSelect(id){
 }
 
 let subPage=1;
+let subPaidAsc=true;
+function toggleSubSort(){subPaidAsc=!subPaidAsc;loadSubs(1);}
 async function loadSubs(p){if(p)subPage=p;
+  const sortIcon=document.getElementById('sub-sort-icon');
+  if(sortIcon) sortIcon.className=subPaidAsc?'ti ti-sort-ascending':'ti ti-sort-descending';
   const s=document.getElementById('sub-status').value;const branchId=document.getElementById('sub-branch')?.value||'';const pp=10;
   const today=new Date().toISOString().split('T')[0];
   let data,count;
@@ -2130,7 +2175,7 @@ async function loadSubs(p){if(p)subPage=p;
     count=merged.length;
     data=merged.slice((subPage-1)*pp,subPage*pp);
   } else {
-    let query=sb.from('subscriptions').select('*,players!inner(first_name,last_name,branch_id)',{count:'exact'}).order('created_at',{ascending:false}).range((subPage-1)*pp,subPage*pp-1);
+    let query=sb.from('subscriptions').select('*,players!inner(first_name,last_name,branch_id)',{count:'exact'}).order('paid_at',{ascending:subPaidAsc}).range((subPage-1)*pp,subPage*pp-1);
     if(s) query=query.eq('status',s);
     if(branchId) query=query.eq('players.branch_id',branchId);
     const res=await query; data=res.data; count=res.count;
