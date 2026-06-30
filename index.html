@@ -722,7 +722,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.8.5 — 30/06/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.8.6 — 30/06/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -2056,6 +2056,18 @@ async function updatePlayerOrder(id, value){
   // Reload after a short delay to re-sort
   setTimeout(loadPlayers,400);
 }
+function birthdaySoon(birthDate){
+  if(!birthDate) return false;
+  const bd=new Date(birthDate);
+  if(isNaN(bd)) return false;
+  const today=new Date();today.setHours(0,0,0,0);
+  let next=new Date(today.getFullYear(),bd.getMonth(),bd.getDate());
+  next.setHours(0,0,0,0);
+  if(next<today) next=new Date(today.getFullYear()+1,bd.getMonth(),bd.getDate());
+  const diff=Math.round((next-today)/(1000*60*60*24));
+  return diff>=0&&diff<=7;
+}
+
 async function loadPlayers(p){if(p)plPage=p;
   const q=document.getElementById('pl-search').value.trim();
   const g=document.getElementById('pl-group').value;
@@ -2073,7 +2085,7 @@ async function loadPlayers(p){if(p)plPage=p;
     <td><div style="display:flex;align-items:center;gap:9px">
       <div class="av" style="overflow:hidden">${p.photo_url?`<img src="${p.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:`${initials(p.first_name+' '+p.last_name)}`}</div>
       <div>
-        <div style="font-weight:700;font-size:14px;color:var(--text)">${p.first_name} ${p.last_name}${p.jersey_number?' <span style="font-size:11px;color:var(--text3)">#'+p.jersey_number+'</span>':''}</div>
+        <div style="font-weight:700;font-size:14px;color:var(--text)">${p.first_name} ${p.last_name}${birthdaySoon(p.birth_date)?' <span title="عيد ميلاد قريب 🎂">🎂</span>':''}${p.jersey_number?' <span style="font-size:11px;color:var(--text3)">#'+p.jersey_number+'</span>':''}</div>
       </div>
     </div></td>
     <td style="font-size:13px">${p.position?'<span class="badge b-blue">'+p.position+'</span>':'—'}${p.secondary_position?'<span class="badge b-gray" style="margin-right:3px;font-size:10px;opacity:.8">'+p.secondary_position+'</span>':''}</td>
