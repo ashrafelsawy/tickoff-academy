@@ -722,7 +722,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.8.6 — 30/06/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.8.7 — 01/07/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -2224,8 +2224,8 @@ async function saveSub(){
 let attPage=1;
 async function loadAtt(p){if(p)attPage=p;
   const d=document.getElementById('att-date').value,s=document.getElementById('att-status').value;const pp=10;
-  let query=sb.from('attendance').select('*,players(first_name,last_name)',{count:'exact'}).order('session_date',{ascending:false}).range((attPage-1)*pp,attPage*pp-1);
-  if(d)query=query.eq('session_date',d);if(s)query=query.eq('status',s);const ab=document.getElementById('att-branch')?.value;if(ab)query=query.eq('branch_id',ab);
+  let query=sb.from('attendance').select('*,players!inner(first_name,last_name,branch_id)',{count:'exact'}).order('session_date',{ascending:false}).range((attPage-1)*pp,attPage*pp-1);
+  if(d)query=query.eq('session_date',d);if(s)query=query.eq('status',s);const ab=document.getElementById('att-branch')?.value;if(ab)query=query.eq('players.branch_id',ab);
   const{data,count}=await query;
   const tb=document.getElementById('att-table');
   if(!data||!data.length){tb.innerHTML='<tr><td colspan="5" class="empty-row">لا توجد سجلات حضور بعد</td></tr>';}
