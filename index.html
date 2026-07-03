@@ -564,8 +564,44 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
 .squad-btn.active-excluded{background:var(--text3);border-color:var(--text3);color:#fff}
 
 
+
+/* STAR RATING */
+.star-skill{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.star-skill-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.star-skill-name{font-size:14px;font-weight:700}
+.star-row{display:flex;gap:6px;justify-content:center}
+.star-btn{font-size:32px;cursor:pointer;color:#3a4a3e;transition:all .1s;user-select:none;line-height:1}
+.star-btn.filled{color:#F5C518}
+.star-btn:active{transform:scale(1.2)}
+
+
+/* DRAGGABLE PITCH */
+.pitch-wrap{position:relative;width:100%;max-width:440px;margin:0 auto;aspect-ratio:10/16;background:#1a7a3c;border-radius:12px;overflow:hidden;touch-action:none;border:2px solid rgba(255,255,255,.3)}
+.pitch-lines{position:absolute;inset:0;pointer-events:none}
+.pitch-halfway{position:absolute;top:50%;left:0;right:0;height:2px;background:rgba(255,255,255,.35);transform:translateY(-1px)}
+.pitch-circle{position:absolute;left:50%;top:50%;width:32%;aspect-ratio:1;border:2px solid rgba(255,255,255,.35);border-radius:50%;transform:translate(-50%,-50%)}
+.pitch-box{position:absolute;left:50%;transform:translateX(-50%);width:44%;height:11%;border:2px solid rgba(255,255,255,.35)}
+.pitch-box-r{top:0;border-top:none}
+.pitch-box-l{bottom:0;border-bottom:none}
+.jersey-token{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;cursor:grab;touch-action:none;transition:opacity .1s}
+.jersey-token:active{cursor:grabbing}
+.jersey-svg{width:56px;height:58px}
+.jersey-name{font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85);margin-top:-6px;white-space:nowrap;background:rgba(0,0,0,.35);padding:1px 8px;border-radius:8px}
+#lineupFsOverlay .pitch-wrap{max-width:min(52vh,480px)}
+#lineupFsOverlay .jersey-svg{width:64px;height:66px}
+#lineupFsOverlay .jersey-name{font-size:14px}
+@media print{
+  body *{visibility:hidden}
+  #lineupFsOverlay,#lineupFsOverlay *{visibility:visible}
+  #lineupFsOverlay{position:absolute;inset:0;background:#fff!important;padding:0}
+  #lineupFsOverlay .lineup-fs-close{display:none}
+  #lineupFsOverlay .lineup-fs-print{display:none}
+  #lineupFsOverlay .pitch-wrap{max-width:100%;width:100%;box-shadow:none}
+  #lineup-fs-body>div:first-child{color:#000!important}
+}
+
 /* LINEUP FULLSCREEN */
-#lineupFsOverlay{position:fixed;inset:0;background:#0D1B0F;z-index:9998;display:none;flex-direction:column;padding:16px;overflow-y:auto}
+#lineupFsOverlay{position:fixed;inset:0;background:#0D1B0F;z-index:9998;display:none;flex-direction:column;justify-content:center;padding:16px;overflow-y:auto}
 #lineupFsOverlay.active{display:flex}
 #lineupFsOverlay .lineup-fs-close{position:absolute;top:14px;left:14px;background:rgba(255,255,255,.2);border:none;color:#fff;width:40px;height:40px;border-radius:10px;font-size:18px;cursor:pointer;z-index:2}
 #lineup-fs-body{max-width:900px;margin:auto;width:100%}
@@ -601,6 +637,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
 <!-- LINEUP FULLSCREEN OVERLAY -->
 <div id="lineupFsOverlay">
   <button class="lineup-fs-close" onclick="closeLineupFullscreen()">✕</button>
+  <button class="lineup-fs-print" onclick="window.print()" style="position:absolute;top:14px;left:62px;background:var(--accent);border:none;color:#0D1B0F;width:40px;height:40px;border-radius:10px;font-size:18px;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center"><i class="ti ti-printer"></i></button>
   <div id="lineup-fs-body"></div>
 </div>
 
@@ -722,7 +759,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.8.7 — 01/07/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.9.3 — 03/07/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -1659,7 +1696,7 @@ const PAGES={
   player_card:{title:'بطاقة اللاعب',sub:'بطاقة تعريفية مفصلة',actions:''},
   month_report:{title:'تقرير الشهر',sub:'لاعب الشهر والإحصائيات',actions:''},
   store:{title:'متجر الأكاديمية',sub:'إدارة المنتجات والطلبات',actions:''},
-  evaluations:{title:'التقييمات',sub:'تقييم أداء اللاعبين',actions:'<button class="btn btn-primary" onclick="openNewEvalFromScreen()"><i class="ti ti-plus"></i> تقييم جديد</button>'},
+  evaluations:{title:'التقييمات',sub:'تقييم أداء اللاعبين',actions:'<button class="btn btn-primary" onclick="openStarRating()" style="background:linear-gradient(135deg,#B8860B,#F5C518)"><i class="ti ti-star"></i> تقييم بالنجوم</button> <button class="btn" onclick="openNewEvalFromScreen()"><i class="ti ti-plus"></i> تقييم تفصيلي</button>'},
   equipment:{title:'المعدات والأدوات',sub:'إدارة أدوات التدريب',actions:'<button class="btn btn-primary" onclick="openModal(\"eqModal\")"><i class="ti ti-plus"></i> إضافة معدة</button>'},
   parent_view:{title:'عرض ولي الأمر',sub:'تقرير متابعة اللاعب',actions:''},
   player_profile:{title:'بروفايل اللاعب',sub:'تفاصيل اللاعب والتقييم',actions:'<button class="btn btn-sm" onclick="navigate(\"players\")"><i class="ti ti-arrow-right"></i> رجوع</button>'},
@@ -1784,14 +1821,23 @@ async function saveQuickPlayer(addAnother){
   }
 }
 
-function openQuickAttendance(){
+async function openQuickAttendance(){
   document.getElementById('quickAttOverlay').classList.add('active');
+  // Ensure branches are loaded
+  if(!allBranches.length){const{data:brs}=await sb.from('branches').select('id,name');if(brs)allBranches=brs;}
   // Set date text
   const now=new Date();
   const days=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
   const d=String(now.getDate()).padStart(2,'0');
   const m=String(now.getMonth()+1).padStart(2,'0');
   document.getElementById('qa-date-text').textContent=`${days[now.getDay()]} ${d}-${m}-${now.getFullYear()}`;
+  // Always refresh branch dropdown from the single source
+  const brSel=document.getElementById('qa-branch');
+  if(brSel){
+    const cur=brSel.value;
+    brSel.innerHTML='<option value="">كل الفروع</option>'+allBranches.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+    if(cur) brSel.value=cur;
+  }
   quickAttState={};
   loadQuickPlayers();
 }
@@ -1803,11 +1849,6 @@ function closeQuickAttendance(){
 async function loadQuickPlayers(){
   const group=document.getElementById('qa-group').value;
   const branch=document.getElementById('qa-branch')?.value||'';
-  // Populate branch filter once
-  const brSel=document.getElementById('qa-branch');
-  if(brSel&&allBranches.length&&brSel.options.length<=1){
-    brSel.innerHTML='<option value="">كل الفروع</option>'+allBranches.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
-  }
   const list=document.getElementById('qa-list');
   list.innerHTML='<div class="loading"><div class="spinner"></div></div>';
 
@@ -3642,71 +3683,34 @@ async function renderLineup(){
     return;
   }
 
-  // Group starters by line
+  const lineColor={gk:'#F5C518',def:'#2D8A3E',mid:'#185FA5',att:'#E03535'};
+  const lineY={att:15,mid:38,def:62,gk:87};  // percent from top: attack up (toward opponent goal), GK down
+
+  // Group by line for auto-position of players without saved coords
   const lines={gk:[],def:[],mid:[],att:[]};
-  starters.forEach(s=>{
+  starters.forEach(s=>{const p=s.players||s.external_players;lines[positionLine(p.position)].push(s);});
+
+  // Build jersey elements with positions (use saved pos_x/pos_y or auto)
+  const jerseys=starters.map(s=>{
     const p=s.players||s.external_players;
     const name=s.players?`${p.first_name} ${p.last_name}`:p.name;
-    lines[positionLine(p.position)].push({name,pos:p.position});
+    const line=positionLine(p.position);
+    const color=lineColor[line];
+    let x=s.pos_x, y=s.pos_y;
+    if(x==null||y==null){
+      // auto position: spread across X within the line, line sets Y
+      const arr=lines[line];
+      const idx=arr.indexOf(s);
+      const n=arr.length;
+      y=lineY[line];
+      x=Math.round((100/(n+1))*(idx+1));
+    }
+    const parts=name.split(' ');
+    const shortName=(parts[0]||'')+(parts[1]?' '+parts[1]:'');
+    return{id:s.id,name:shortName,color,x,y};
   });
 
-  // LANDSCAPE pitch 800x520. Lines go right(own goal/GK) -> left(attack)
-  const lineX={gk:740,def:560,mid:380,att:170};
-  const lineColor={gk:'#F5C518',def:'#2D8A3E',mid:'#185FA5',att:'#E03535'};
-  const gkTextColor={gk:'#1a1a1a',def:'#fff',mid:'#fff',att:'#fff'};
-
-  let circles='';
-  ['att','mid','def','gk'].forEach(line=>{
-    const players=lines[line];
-    const n=players.length;
-    if(!n) return;
-    const x=lineX[line];
-    players.forEach((pl,i)=>{
-      const y=Math.round((520/(n+1))*(i+1));
-      const parts=pl.name.split(' ');
-      const fn=parts[0]||'';
-      const ln=parts[1]||'';
-      circles+=`<g>
-        <circle cx="${x}" cy="${y}" r="36" fill="${lineColor[line]}" stroke="#fff" stroke-width="2.5"/>
-        <text x="${x}" y="${ln?y-4:y+4}" text-anchor="middle" font-size="14" font-weight="700" fill="${gkTextColor[line]}">${fn}</text>
-        ${ln?`<text x="${x}" y="${y+13}" text-anchor="middle" font-size="12" font-weight="600" fill="${gkTextColor[line]}">${ln}</text>`:''}
-      </g>`;
-    });
-  });
-
-  // Landscape pitch SVG (reusable)
-  const pitchSvg=`<svg viewBox="0 0 800 520" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:12px;background:#1a7a3c" preserveAspectRatio="xMidYMid meet">
-    <rect x="8" y="8" width="784" height="504" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2" rx="4"/>
-    <line x1="400" y1="8" x2="400" y2="512" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
-    <circle cx="400" cy="260" r="60" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
-    <circle cx="400" cy="260" r="3" fill="rgba(255,255,255,.5)"/>
-    <rect x="8" y="160" width="80" height="200" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
-    <rect x="712" y="160" width="80" height="200" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
-    ${circles}
-  </svg>`;
-
-  const legend=`<div style="display:flex;justify-content:center;gap:14px;margin-top:12px;font-size:12px;flex-wrap:wrap">
-    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#F5C518"></span> حارس</span>
-    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#2D8A3E"></span> دفاع</span>
-    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#185FA5"></span> وسط</span>
-    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:50%;background:#E03535"></span> هجوم</span>
-  </div>`;
-
-  const subsHtml=subs.length?`
-    <div style="margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px">
-      <div style="font-size:13px;font-weight:600;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:6px"><i class="ti ti-refresh"></i> دكة البدلاء (${subs.length})</div>
-      <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center">
-        ${subs.map(s=>{
-          const p=s.players||s.external_players;
-          const name=s.players?`${p.first_name} ${p.last_name}`:p.name;
-          const parts=name.split(' ');
-          return`<div style="width:64px;height:64px;border-radius:50%;background:#888;border:2px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;text-align:center;line-height:1.2"><span>${parts[0]||''}</span>${parts[1]?`<span>${parts[1]}</span>`:''}</div>`;
-        }).join('')}
-      </div>
-    </div>`:'';
-
-  // Store for fullscreen
-  window._lineupFullscreen={pitchSvg,legend,subsHtml,title:`${match.teams?.name||'—'} vs ${match.opponent}`,sub:`${fmtDate(match.match_date)} · ${match.location||''}`};
+  window._lineupState={matchId,jerseys,match,subs};
 
   el.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
@@ -3714,31 +3718,104 @@ async function renderLineup(){
         <div style="font-size:16px;font-weight:700">${match.teams?.name||'—'} <span style="color:var(--text3)">vs</span> ${match.opponent}</div>
         <div style="font-size:12px;color:var(--text3)">${fmtDate(match.match_date)} · ${match.location||''}</div>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="openLineupFullscreen()"><i class="ti ti-maximize"></i> ملء الشاشة</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" onclick="resetLineupPositions()"><i class="ti ti-refresh"></i> إعادة ترتيب</button>
+        <button class="btn btn-primary btn-sm" onclick="openLineupFullscreen()"><i class="ti ti-maximize"></i> ملء الشاشة</button>
+      </div>
     </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem">
-      ${pitchSvg}
-      ${legend}
-      ${subsHtml}
-    </div>`;
+    <div style="font-size:12px;color:var(--accent);text-align:center;margin-bottom:8px"><i class="ti ti-hand-finger"></i> اسحب أي قميص لتغيير مكانه — يُحفظ تلقائياً</div>
+    ${buildPitchHTML('lineup-pitch')}
+    ${buildSubsHTML(subs)}`;
+
+  initJerseyDrag('lineup-pitch');
+}
+
+function buildPitchHTML(pitchId){
+  const j=window._lineupState.jerseys;
+  const jerseyEls=j.map(jr=>`
+    <div class="jersey-token" data-id="${jr.id}" style="left:${jr.x}%;top:${jr.y}%">
+      <svg viewBox="0 0 60 62" class="jersey-svg"><path d="M 6,14 L 20,4 C 23,10 37,10 40,4 L 54,14 L 47,26 L 40,22 L 40,58 L 20,58 L 20,22 L 13,26 Z" fill="${jr.color}" stroke="#fff" stroke-width="2.5"/></svg>
+      <div class="jersey-name">${jr.name}</div>
+    </div>`).join('');
+  return`<div class="pitch-wrap" id="${pitchId}">
+    <div class="pitch-lines">
+      <div class="pitch-halfway"></div><div class="pitch-circle"></div>
+      <div class="pitch-box pitch-box-r"></div><div class="pitch-box pitch-box-l"></div>
+    </div>
+    ${jerseyEls}
+  </div>`;
+}
+
+function buildSubsHTML(subs){
+  if(!subs||!subs.length) return '';
+  return`<div style="margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px">
+    <div style="font-size:13px;font-weight:600;color:var(--text3);margin-bottom:10px"><i class="ti ti-refresh"></i> دكة البدلاء (${subs.length})</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center">
+      ${subs.map(s=>{const p=s.players||s.external_players;const name=s.players?`${p.first_name} ${p.last_name}`:p.name;const parts=name.split(' ');return`<div style="width:60px;height:60px;border-radius:50%;background:#888;border:2px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;text-align:center;line-height:1.15"><span>${parts[0]||''}</span>${parts[1]?`<span>${parts[1]}</span>`:''}</div>`;}).join('')}
+    </div>
+  </div>`;
+}
+
+let _dragEl=null,_dragPitch=null;
+function initJerseyDrag(pitchId){
+  const pitch=document.getElementById(pitchId);
+  if(!pitch) return;
+  pitch.querySelectorAll('.jersey-token').forEach(tok=>{
+    tok.addEventListener('pointerdown',e=>{
+      _dragEl=tok;_dragPitch=pitch;tok.setPointerCapture(e.pointerId);
+      tok.style.zIndex=100;tok.style.opacity='.85';
+      e.preventDefault();
+    });
+  });
+  pitch.addEventListener('pointermove',e=>{
+    if(!_dragEl||_dragPitch!==pitch) return;
+    const rect=pitch.getBoundingClientRect();
+    let x=((e.clientX-rect.left)/rect.width)*100;
+    let y=((e.clientY-rect.top)/rect.height)*100;
+    x=Math.max(3,Math.min(97,x));y=Math.max(4,Math.min(96,y));
+    _dragEl.style.left=x+'%';_dragEl.style.top=y+'%';
+  });
+  pitch.addEventListener('pointerup',async e=>{
+    if(!_dragEl||_dragPitch!==pitch) return;
+    const tok=_dragEl;_dragEl=null;
+    tok.style.zIndex='';tok.style.opacity='';
+    const id=tok.dataset.id;
+    const x=parseFloat(tok.style.left);
+    const y=parseFloat(tok.style.top);
+    // update local state
+    const jr=(window._lineupState.jerseys||[]).find(j=>j.id===id);
+    if(jr){jr.x=x;jr.y=y;}
+    // save to DB
+    await sb.from('match_squad').update({pos_x:x,pos_y:y}).eq('id',id);
+  });
+}
+
+async function resetLineupPositions(){
+  const st=window._lineupState;
+  if(!st) return;
+  if(!confirm('إعادة ترتيب اللاعبين تلقائياً حسب مراكزهم؟')) return;
+  const ids=st.jerseys.map(j=>j.id);
+  await sb.from('match_squad').update({pos_x:null,pos_y:null}).in('id',ids);
+  renderLineup();
 }
 
 function openLineupFullscreen(){
-  const d=window._lineupFullscreen;
-  if(!d) return;
+  const st=window._lineupState;
+  if(!st) return;
   const ov=document.getElementById('lineupFsOverlay');
   document.getElementById('lineup-fs-body').innerHTML=`
     <div style="text-align:center;margin-bottom:10px;color:#fff">
-      <div style="font-size:18px;font-weight:800">${d.title}</div>
-      <div style="font-size:12px;opacity:.7">${d.sub}</div>
+      <div style="font-size:18px;font-weight:800">${st.match.teams?.name||'—'} vs ${st.match.opponent}</div>
+      <div style="font-size:12px;opacity:.7">${fmtDate(st.match.match_date)} · ${st.match.location||''}</div>
     </div>
-    ${d.pitchSvg}
-    ${d.legend}
-    ${d.subsHtml||''}`;
+    ${buildPitchHTML('lineup-fs-pitch')}
+    ${buildSubsHTML(st.subs)}`;
   ov.classList.add('active');
+  initJerseyDrag('lineup-fs-pitch');
 }
 function closeLineupFullscreen(){
   document.getElementById('lineupFsOverlay').classList.remove('active');
+  renderLineup(); // refresh main view with any changes made in fullscreen
 }
 
 function switchAddPlayerTab(tab){
@@ -5143,6 +5220,72 @@ async function loadEvaluations(p){if(p!==undefined)evlPage=p;
 }
 
 
+
+// ============================================================
+// STAR RATING (6 skills, 1-5 stars, monthly)
+// ============================================================
+const STAR_SKILLS=[
+  {key:'shooting',name:'التسديد'},
+  {key:'passing',name:'التمرير'},
+  {key:'ball_control',name:'التحكم في الكرة'},
+  {key:'speed',name:'السرعة'},
+  {key:'focus',name:'التركيز'},
+  {key:'team_spirit',name:'روح الفريق'},
+];
+let starValues={};
+
+async function openStarRating(){
+  starValues={shooting:0,passing:0,ball_control:0,speed:0,focus:0,team_spirit:0};
+  // Populate players
+  const sel=document.getElementById('sr-player');
+  const{data:players}=await sb.from('players').select('id,first_name,last_name').eq('status','نشط').order('first_name');
+  sel.innerHTML='<option value="">اختر اللاعب...</option>'+(players||[]).map(p=>`<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
+  document.getElementById('sr-notes').value='';
+  renderStarSkills();
+  openModal('starRatingModal');
+}
+
+function renderStarSkills(){
+  document.getElementById('sr-skills').innerHTML=STAR_SKILLS.map(sk=>{
+    const val=starValues[sk.key]||0;
+    const stars=[1,2,3,4,5].map(n=>`<span class="star-btn ${n<=val?'filled':''}" onclick="setStar('${sk.key}',${n})">★</span>`).join('');
+    return`<div class="star-skill">
+      <div class="star-skill-head"><span class="star-skill-name">${sk.name}</span><span style="font-size:13px;color:#F5C518;font-weight:700">${val>0?val+'/5':'—'}</span></div>
+      <div class="star-row">${stars}</div>
+    </div>`;
+  }).join('');
+}
+
+function setStar(skill,value){
+  // Toggle off if clicking same value
+  starValues[skill]=(starValues[skill]===value)?value-1:value;
+  renderStarSkills();
+}
+
+async function saveStarRating(){
+  const playerId=document.getElementById('sr-player').value;
+  if(!playerId){toast('اختر اللاعب','error');return;}
+  const anyRated=Object.values(starValues).some(v=>v>0);
+  if(!anyRated){toast('قيّم مهارة واحدة على الأقل','error');return;}
+  const now=new Date();
+  const{error}=await sb.from('player_skill_ratings').insert({
+    player_id:playerId,
+    rating_date:now.toISOString().split('T')[0],
+    month:now.getMonth()+1,
+    year:now.getFullYear(),
+    shooting:starValues.shooting||null,
+    passing:starValues.passing||null,
+    ball_control:starValues.ball_control||null,
+    speed:starValues.speed||null,
+    focus:starValues.focus||null,
+    team_spirit:starValues.team_spirit||null,
+    notes:document.getElementById('sr-notes').value||null,
+  });
+  if(error){toast('خطأ: '+error.message,'error');return;}
+  toast('تم حفظ التقييم ✓');
+  closeModal('starRatingModal');
+}
+
 function openNewEvalFromScreen(){
   editEvalId=null;
   currentEvalPlayerId=null;
@@ -5728,6 +5871,21 @@ initAuth();
   </div>
 </div>
 
+
+<!-- STAR RATING MODAL -->
+<div id="starRatingModal" class="modal-overlay">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head"><span class="modal-title"><i class="ti ti-star" style="color:#F5C518"></i> تقييم بالنجوم</span><button class="icon-btn" onclick="closeModal('starRatingModal')"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+      <div class="field full" style="margin-bottom:14px"><label>اللاعب *</label><select id="sr-player"><option value="">اختر اللاعب...</option></select></div>
+      <div id="sr-skills"></div>
+      <div class="field full" style="margin-top:12px"><label>ملاحظات</label><textarea id="sr-notes" placeholder="ملاحظات على أداء اللاعب..."></textarea></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('starRatingModal')">إلغاء</button><button class="btn btn-primary" onclick="saveStarRating()"><i class="ti ti-check"></i> حفظ التقييم</button></div>
+  </div>
+</div>
+
+<!-- STAR RATING MODAL END -->
 
 <!-- BRANCH MODAL -->
 <div id="branchModal" class="modal-overlay">
