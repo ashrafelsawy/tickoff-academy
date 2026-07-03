@@ -759,7 +759,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.9.3 — 03/07/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.9.5 — 03/07/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -3728,6 +3728,7 @@ async function renderLineup(){
     ${buildSubsHTML(subs)}`;
 
   initJerseyDrag('lineup-pitch');
+  initSubSwap('lineup-pitch');
 }
 
 function buildPitchHTML(pitchId){
@@ -3747,11 +3748,11 @@ function buildPitchHTML(pitchId){
 }
 
 function buildSubsHTML(subs){
-  if(!subs||!subs.length) return '';
-  return`<div style="margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px">
-    <div style="font-size:13px;font-weight:600;color:var(--text3);margin-bottom:10px"><i class="ti ti-refresh"></i> دكة البدلاء (${subs.length})</div>
+  if(!subs||!subs.length) return '<div id="subs-dropzone" style="margin-top:14px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;padding:20px;text-align:center;color:var(--text3);font-size:13px">دكة البدلاء فارغة — اسحب لاعباً هنا لإنزاله</div>';
+  return`<div id="subs-dropzone" style="margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px">
+    <div style="font-size:13px;font-weight:600;color:var(--text3);margin-bottom:10px"><i class="ti ti-refresh"></i> دكة البدلاء (${subs.length}) <span style="font-weight:400;font-size:11px">— اسحب لاعباً للملعب للتبديل</span></div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center">
-      ${subs.map(s=>{const p=s.players||s.external_players;const name=s.players?`${p.first_name} ${p.last_name}`:p.name;const parts=name.split(' ');return`<div style="width:60px;height:60px;border-radius:50%;background:#888;border:2px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;text-align:center;line-height:1.15"><span>${parts[0]||''}</span>${parts[1]?`<span>${parts[1]}</span>`:''}</div>`;}).join('')}
+      ${subs.map(s=>{const p=s.players||s.external_players;const name=s.players?`${p.first_name} ${p.last_name}`:p.name;const parts=name.split(' ');return`<div class="sub-token" data-id="${s.id}" style="width:60px;height:60px;border-radius:50%;background:#888;border:2px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;text-align:center;line-height:1.15;cursor:grab;touch-action:none;user-select:none"><span>${parts[0]||''}</span>${parts[1]?`<span>${parts[1]}</span>`:''}</div>`;}).join('')}
     </div>
   </div>`;
 }
@@ -3799,6 +3800,76 @@ async function resetLineupPositions(){
   renderLineup();
 }
 
+// Swap: drag a substitute onto a pitch player → they exchange places
+let _subDragEl=null,_subGhost=null;
+function initSubSwap(pitchId){
+  const pitch=document.getElementById(pitchId);
+  if(!pitch) return;
+  const container=pitch.closest('#lineup-container, #lineup-fs-body')||document;
+  container.querySelectorAll('.sub-token').forEach(tok=>{
+    tok.addEventListener('pointerdown',e=>{
+      e.preventDefault();
+      _subDragEl=tok;
+      tok.style.opacity='.4';
+      _subGhost=tok.cloneNode(true);
+      _subGhost.style.position='fixed';_subGhost.style.zIndex='10000';
+      _subGhost.style.pointerEvents='none';_subGhost.style.opacity='.95';
+      _subGhost.style.margin='0';
+      _subGhost.style.left=(e.clientX-30)+'px';_subGhost.style.top=(e.clientY-30)+'px';
+      document.body.appendChild(_subGhost);
+
+      const moveHandler=(ev)=>{
+        if(!_subGhost) return;
+        ev.preventDefault();
+        _subGhost.style.left=(ev.clientX-30)+'px';_subGhost.style.top=(ev.clientY-30)+'px';
+        pitch.querySelectorAll('.jersey-token').forEach(j=>j.style.filter='');
+        const target=jerseyUnderPoint(pitch,ev.clientX,ev.clientY);
+        if(target) target.style.filter='drop-shadow(0 0 10px #F5C518)';
+      };
+      const upHandler=async(ev)=>{
+        document.removeEventListener('pointermove',moveHandler);
+        document.removeEventListener('pointerup',upHandler);
+        if(tok) tok.style.opacity='';
+        if(_subGhost){_subGhost.remove();_subGhost=null;}
+        pitch.querySelectorAll('.jersey-token').forEach(j=>j.style.filter='');
+        const target=jerseyUnderPoint(pitch,ev.clientX,ev.clientY);
+        const dragged=_subDragEl;_subDragEl=null;
+        if(target&&dragged){
+          await swapPlayers(dragged.dataset.id,target.dataset.id);
+        }
+      };
+      document.addEventListener('pointermove',moveHandler,{passive:false});
+      document.addEventListener('pointerup',upHandler);
+    });
+  });
+}
+
+function jerseyUnderPoint(pitch,cx,cy){
+  let found=null;
+  pitch.querySelectorAll('.jersey-token').forEach(j=>{
+    const r=j.getBoundingClientRect();
+    if(cx>=r.left&&cx<=r.right&&cy>=r.top&&cy<=r.bottom) found=j;
+  });
+  return found;
+}
+
+async function swapPlayers(subId,starterId){
+  // Get starter's position, then swap statuses
+  const st=window._lineupState;
+  const starterJersey=(st.jerseys||[]).find(j=>j.id===starterId);
+  const px=starterJersey?starterJersey.x:50;
+  const py=starterJersey?starterJersey.y:50;
+  // sub becomes starter at that position; starter becomes sub
+  await Promise.all([
+    sb.from('match_squad').update({squad_status:'starter',pos_x:px,pos_y:py}).eq('id',subId),
+    sb.from('match_squad').update({squad_status:'sub',pos_x:null,pos_y:null}).eq('id',starterId),
+  ]);
+  toast('تم التبديل ✓');
+  // re-render the appropriate view
+  const inFs=document.getElementById('lineupFsOverlay').classList.contains('active');
+  if(inFs) openLineupFullscreen(); else renderLineup();
+}
+
 function openLineupFullscreen(){
   const st=window._lineupState;
   if(!st) return;
@@ -3812,6 +3883,7 @@ function openLineupFullscreen(){
     ${buildSubsHTML(st.subs)}`;
   ov.classList.add('active');
   initJerseyDrag('lineup-fs-pitch');
+  initSubSwap('lineup-fs-pitch');
 }
 function closeLineupFullscreen(){
   document.getElementById('lineupFsOverlay').classList.remove('active');
