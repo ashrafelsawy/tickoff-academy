@@ -661,6 +661,29 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </select>
     </div>
     <div class="qp-field"><label>الفرع</label><select id="qp-branch"><option value="">اختر الفرع...</option></select></div>
+
+    <div style="margin:8px 0 4px;border-top:1px solid rgba(255,255,255,.1);padding-top:14px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none">
+        <input type="checkbox" id="qp-with-sub" onchange="toggleQuickSub()" style="width:22px;height:22px;accent-color:#6DC82A">
+        <span style="font-size:15px;font-weight:700;color:#6DC82A"><i class="ti ti-cash"></i> تسجيل اشتراك مع التعريف</span>
+      </label>
+    </div>
+    <div id="qp-sub-fields" style="display:none;background:#0f2419;border:1px solid #2D8A3E;border-radius:12px;padding:14px;margin-top:8px">
+      <div class="qp-field"><label>المبلغ (ج) *</label><input id="qp-sub-amount" type="number" placeholder="300" min="0"></div>
+      <div class="qp-field"><label>الخطة</label>
+        <select id="qp-sub-plan" onchange="updateQuickSubExpiry()">
+          <option value="شهري">شهري</option>
+          <option value="ربع سنوي">ربع سنوي (3 شهور)</option>
+          <option value="نصف سنوي">نصف سنوي (6 شهور)</option>
+          <option value="سنوي">سنوي</option>
+        </select>
+      </div>
+      <div class="qp-field"><label>تاريخ الدفع</label><input id="qp-sub-paid" type="date" onchange="updateQuickSubExpiry()"></div>
+      <div class="qp-field"><label>تاريخ الانتهاء (تلقائي)</label><input id="qp-sub-expires" type="date"></div>
+      <div class="qp-field"><label>طريقة الدفع</label>
+        <select id="qp-sub-method"><option>نقدي</option><option>تحويل</option><option>انستاباي</option><option>فودافون كاش</option></select>
+      </div>
+    </div>
   </div>
   <div style="padding:14px;background:#0D1B0F;flex-shrink:0;display:flex;flex-direction:column;gap:8px">
     <button onclick="saveQuickPlayer(true)" style="width:100%;background:#1a3a1f;border:1.5px solid #2D8A3E;border-radius:14px;padding:14px;font-size:15px;font-weight:700;color:#6DC82A;cursor:pointer"><i class="ti ti-user-plus"></i> حفظ وإضافة آخر</button>
@@ -759,7 +782,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.9.5 — 03/07/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.9.6 — 03/07/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -1788,8 +1811,34 @@ function closeQuickPlayer(){
 function clearQuickPlayerFields(){
   ['qp-fname','qp-lname','qp-parent','qp-phone'].forEach(id=>{document.getElementById(id).value='';});
   document.getElementById('qp-group').value='';
+  // reset subscription section
+  const cb=document.getElementById('qp-with-sub');
+  if(cb){cb.checked=false;document.getElementById('qp-sub-fields').style.display='none';}
+  ['qp-sub-amount'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   // keep branch selected for the queue
   setTimeout(()=>document.getElementById('qp-fname').focus(),100);
+}
+
+function toggleQuickSub(){
+  const on=document.getElementById('qp-with-sub').checked;
+  document.getElementById('qp-sub-fields').style.display=on?'block':'none';
+  if(on){
+    // default paid date = today, then compute expiry
+    const paid=document.getElementById('qp-sub-paid');
+    if(!paid.value) paid.value=new Date().toISOString().split('T')[0];
+    updateQuickSubExpiry();
+  }
+}
+
+function updateQuickSubExpiry(){
+  const paidVal=document.getElementById('qp-sub-paid').value;
+  if(!paidVal) return;
+  const plan=document.getElementById('qp-sub-plan').value;
+  const monthsMap={'شهري':1,'ربع سنوي':3,'نصف سنوي':6,'سنوي':12};
+  const months=monthsMap[plan]||1;
+  const d=new Date(paidVal);
+  d.setMonth(d.getMonth()+months);
+  document.getElementById('qp-sub-expires').value=d.toISOString().split('T')[0];
 }
 
 async function saveQuickPlayer(addAnother){
@@ -1799,20 +1848,40 @@ async function saveQuickPlayer(addAnother){
   if(!fn||!ln){toast('الاسم الأول والعائلة مطلوبان','error');return;}
   if(!group){toast('اختر المجموعة','error');return;}
 
+  const withSub=document.getElementById('qp-with-sub').checked;
+  const subAmount=Number(document.getElementById('qp-sub-amount').value);
+  if(withSub&&!subAmount){toast('أدخل مبلغ الاشتراك','error');return;}
+
   const btn=document.getElementById('qp-save-btn');
   btn.disabled=true;
 
-  const{error}=await sb.from('players').insert({
+  // 1) Insert player and get the new ID back
+  const{data:newPlayer,error}=await sb.from('players').insert({
     first_name:fn,last_name:ln,group_age:group,
     parent_name:document.getElementById('qp-parent').value||null,
     parent_phone:document.getElementById('qp-phone').value||null,
     branch_id:document.getElementById('qp-branch').value||null,
     status:'نشط',
-  });
+  }).select('id').single();
+
+  if(error){btn.disabled=false;toast('خطأ: '+error.message,'error');return;}
+
+  // 2) If subscription requested, insert it using the new player_id
+  if(withSub&&newPlayer){
+    const{error:subErr}=await sb.from('subscriptions').insert({
+      player_id:newPlayer.id,
+      amount:subAmount,
+      plan:document.getElementById('qp-sub-plan').value,
+      paid_at:document.getElementById('qp-sub-paid').value||new Date().toISOString().split('T')[0],
+      expires_at:document.getElementById('qp-sub-expires').value||null,
+      payment_method:document.getElementById('qp-sub-method').value,
+      status:'مدفوع',
+    });
+    if(subErr){btn.disabled=false;toast('تم حفظ اللاعب لكن فشل الاشتراك: '+subErr.message,'error');return;}
+  }
 
   btn.disabled=false;
-  if(error){toast('خطأ: '+error.message,'error');return;}
-  toast(`تم تسجيل ${fn} ${ln} ✓`);
+  toast(withSub?`تم تسجيل ${fn} ${ln} + الاشتراك ✓`:`تم تسجيل ${fn} ${ln} ✓`);
 
   if(addAnother){
     clearQuickPlayerFields();  // keep overlay open, branch stays
