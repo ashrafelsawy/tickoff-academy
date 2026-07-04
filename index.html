@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
   /* Tick Off Brand Colors */
@@ -782,7 +783,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.9.6 — 03/07/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.9.7 — 05/07/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -1706,9 +1707,9 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const PAGES={
   dashboard:{title:'الداشبورد',sub:'أكاديمية Tick Off — موسم 2024-2025',actions:''},
   field_mode:{title:'في الملعب',sub:'أدوات سريعة',actions:''},
-  players:{title:'اللاعبون',sub:'إدارة اللاعبين المسجلين',actions:'<button class="btn btn-primary" onclick="openQuickPlayer()" style="background:linear-gradient(135deg,#1A5C2A,#2D8A3E)"><i class="ti ti-bolt"></i> تعريف سريع</button> <button class="btn" onclick="openModal(\'playerModal\');loadCoachSelect()"><i class="ti ti-plus"></i> لاعب جديد</button>'},
+  players:{title:'اللاعبون',sub:'إدارة اللاعبين المسجلين',actions:'<button class="btn btn-primary" onclick="openQuickPlayer()" style="background:linear-gradient(135deg,#1A5C2A,#2D8A3E)"><i class="ti ti-bolt"></i> تعريف سريع</button> <button class="btn" onclick="openModal(\'playerModal\');loadCoachSelect()"><i class="ti ti-plus"></i> لاعب جديد</button> <button class="btn" onclick="exportPlayers()" style="border-color:#1D6F42;color:#6DC82A"><i class="ti ti-file-spreadsheet"></i> Excel</button>'},
   coaches:{title:'المدربون',sub:'إدارة المدربين',actions:'<button class="btn btn-primary" onclick="openModal(\'coachModal\')"><i class="ti ti-plus"></i> مدرب جديد</button>'},
-  subscriptions:{title:'الاشتراكات',sub:'إدارة المدفوعات',actions:'<button class="btn btn-primary" onclick="openModal(\'subModal\');loadPlayerSelect(\'s-player\')"><i class="ti ti-plus"></i> تسجيل دفعة</button>'},
+  subscriptions:{title:'الاشتراكات',sub:'إدارة المدفوعات',actions:'<button class="btn btn-primary" onclick="openModal(\'subModal\');loadPlayerSelect(\'s-player\')"><i class="ti ti-plus"></i> تسجيل دفعة</button> <button class="btn" onclick="exportSubscriptions()" style="border-color:#1D6F42;color:#6DC82A"><i class="ti ti-file-spreadsheet"></i> Excel</button>'},
   attendance:{title:'الحضور',sub:'سجل الحضور والغياب',actions:'<button class="btn btn-primary" onclick="openQuickAttendance()" style="background:linear-gradient(135deg,#1A5C2A,#2D8A3E)"><i class="ti ti-bolt"></i> الوضع السريع</button> <button class="btn" onclick="openModal(\'attModal\');loadPlayerSelect(\'a-player\');autoSetToday(\'a-date\');setTimeout(()=>showDayName(\'a-date\',\'a-day-name\'),50)"><i class="ti ti-plus"></i> تسجيل فردي</button>'},
   expenses:{title:'المصروفات',sub:'تتبع مصروفات الأكاديمية',actions:'<button class="btn btn-primary" onclick="openModal(\'expModal\')"><i class="ti ti-plus"></i> مصروف جديد</button>'},
   schedule:{title:'الجدول',sub:'جدول التدريبات والمباريات',actions:'<button class="btn btn-primary" onclick="openModal(\'sessionModal\');loadCoachSelect(\'sc-coach\')"><i class="ti ti-plus"></i> جلسة جديدة</button>'},
@@ -2166,6 +2167,68 @@ async function updatePlayerOrder(id, value){
   // Reload after a short delay to re-sort
   setTimeout(loadPlayers,400);
 }
+
+// ============================================================
+// EXCEL EXPORT (SheetJS)
+// ============================================================
+function _sheetToFile(rows, sheetName, fileName){
+  if(!rows||!rows.length){toast('لا توجد بيانات للتصدير','error');return;}
+  const ws=XLSX.utils.json_to_sheet(rows);
+  // Set RTL view
+  ws['!views']=[{RTL:true}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,sheetName);
+  const stamp=new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb,`${fileName}_${stamp}.xlsx`);
+  toast('تم تصدير الملف ✓');
+}
+
+async function exportPlayers(){
+  toast('جاري تجهيز الملف...');
+  const{data,error}=await sb.from('players').select('*,branches(name),coaches(name)').order('sort_order',{ascending:true});
+  if(error){toast('خطأ: '+error.message,'error');return;}
+  const rows=(data||[]).map(p=>({
+    'الترتيب':p.sort_order===999?'':p.sort_order,
+    'الاسم الأول':p.first_name||'',
+    'اسم العائلة':p.last_name||'',
+    'المجموعة':p.group_age||'',
+    'المركز الأساسي':p.position||'',
+    'المركز الثانوي':p.secondary_position||'',
+    'رقم القميص':p.jersey_number||'',
+    'تاريخ الميلاد':p.birth_date||'',
+    'اسم ولي الأمر':p.parent_name||'',
+    'رقم ولي الأمر':p.parent_phone||'',
+    'الفرع':p.branches?.name||'',
+    'المدرب':p.coaches?.name||'',
+    'الحالة':p.status||'',
+    'ملاحظات':p.notes||'',
+    'تاريخ التسجيل':p.created_at?p.created_at.split('T')[0]:'',
+  }));
+  _sheetToFile(rows,'اللاعبون','لاعبو_الأكاديمية');
+}
+
+async function exportSubscriptions(){
+  toast('جاري تجهيز الملف...');
+  const{data,error}=await sb.from('subscriptions').select('*,players(first_name,last_name,group_age,branches(name))').order('paid_at',{ascending:true});
+  if(error){toast('خطأ: '+error.message,'error');return;}
+  const rows=(data||[]).map(s=>{
+    const p=s.players;
+    return{
+      'اللاعب':p?`${p.first_name} ${p.last_name}`:'—',
+      'المجموعة':p?.group_age||'',
+      'الفرع':p?.branches?.name||'',
+      'الخطة':s.plan||'',
+      'المبلغ':s.amount||0,
+      'تاريخ الدفع':s.paid_at||'',
+      'تاريخ الانتهاء':s.expires_at||'',
+      'طريقة الدفع':s.payment_method||'',
+      'الحالة':s.status||'',
+      'ملاحظات':s.notes||'',
+    };
+  });
+  _sheetToFile(rows,'الاشتراكات','اشتراكات_الأكاديمية');
+}
+
 function birthdaySoon(birthDate){
   if(!birthDate) return false;
   const bd=new Date(birthDate);
