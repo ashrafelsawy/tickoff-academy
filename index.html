@@ -783,7 +783,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.9.10 — 06/07/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.9.11 — 06/07/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -978,6 +978,13 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       <div class="filter-bar">
         <div class="search-wrap"><i class="ti ti-search"></i><input type="text" placeholder="بحث..." id="sub-search" oninput="loadSubs()"></div>
         <select id="sub-status" onchange="loadSubs()" style="width:130px"><option value="">كل الحالات</option><option value="مدفوع">مدفوع</option><option value="متأخر">متأخر</option></select>
+        <select id="sub-month" onchange="loadSubs()" style="width:140px">
+          <option value="">كل الشهور</option>
+          <option value="1">يناير</option><option value="2">فبراير</option><option value="3">مارس</option>
+          <option value="4">أبريل</option><option value="5">مايو</option><option value="6">يونيو</option>
+          <option value="7">يوليو</option><option value="8">أغسطس</option><option value="9">سبتمبر</option>
+          <option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option>
+        </select>
         <select id="sub-branch" onchange="loadSubs()" style="width:130px"><option value="">كل الفروع</option></select>
       </div>
       <div class="table-wrap">
@@ -2351,6 +2358,10 @@ async function loadSubs(p){if(p)subPage=p;
   const sortIcon=document.getElementById('sub-sort-icon');
   if(sortIcon) sortIcon.className=subPaidAsc?'ti ti-sort-ascending':'ti ti-sort-descending';
   const s=document.getElementById('sub-status').value;const branchId=document.getElementById('sub-branch')?.value||'';const pp=10;
+  // Month filter — default to current month on first load
+  const monthSel=document.getElementById('sub-month');
+  if(monthSel&&!monthSel.dataset.init){monthSel.value=String(new Date().getMonth()+1);monthSel.dataset.init='1';}
+  const monthVal=monthSel?monthSel.value:'';
   const today=new Date().toISOString().split('T')[0];
   let data,count;
 
@@ -2373,6 +2384,12 @@ async function loadSubs(p){if(p)subPage=p;
     let query=sb.from('subscriptions').select('*,players!inner(first_name,last_name,branch_id)',{count:'exact'}).order('paid_at',{ascending:subPaidAsc}).range((subPage-1)*pp,subPage*pp-1);
     if(s) query=query.eq('status',s);
     if(branchId) query=query.eq('players.branch_id',branchId);
+    if(monthVal){
+      const y=new Date().getFullYear();
+      const mm=String(monthVal).padStart(2,'0');
+      const lastDay=new Date(y,Number(monthVal),0).getDate();
+      query=query.gte('paid_at',`${y}-${mm}-01`).lte('paid_at',`${y}-${mm}-${lastDay}`);
+    }
     const res=await query; data=res.data; count=res.count;
   }
 
