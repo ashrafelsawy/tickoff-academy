@@ -652,13 +652,13 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
   </div>
   <div style="flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch">
     <div class="qp-field"><label>الاسم الأول *</label><input id="qp-fname" type="text" placeholder="محمد"></div>
-    <div class="qp-field"><label>اسم العائلة *</label><input id="qp-lname" type="text" placeholder="أحمد"></div>
-    <div class="qp-field"><label>اسم ولي الأمر</label><input id="qp-parent" type="text" placeholder="أحمد محمود"></div>
+    <div class="qp-field"><label>اسم العائلة *</label><input id="qp-lname" type="text" placeholder="أحمد" onblur="autoFillParent('qp-lname','qp-parent')"></div>
+    <div class="qp-field"><label>اسم ولي الأمر</label><input id="qp-parent" type="text" placeholder="نفس اسم العائلة تلقائياً"></div>
     <div class="qp-field"><label>رقم تليفون ولي الأمر</label><input id="qp-phone" type="tel" placeholder="010xxxxxxxx"></div>
     <div class="qp-field"><label>المجموعة *</label>
       <select id="qp-group">
         <option value="">اختر المجموعة...</option>
-        <option>تحت 10</option><option>تحت 12</option><option>تحت 14</option><option>تحت 16</option><option>تحت 18</option>
+        <option value="تحت 3">تحت 3 (2023)</option><option value="تحت 4">تحت 4 (2022)</option><option value="تحت 5">تحت 5 (2021)</option><option value="تحت 6">تحت 6 (2020)</option><option value="تحت 7">تحت 7 (2019)</option><option value="تحت 8">تحت 8 (2018)</option><option value="تحت 9">تحت 9 (2017)</option><option value="تحت 10">تحت 10 (2016)</option><option value="تحت 11">تحت 11 (2015)</option><option value="تحت 12">تحت 12 (2014)</option><option value="تحت 13">تحت 13 (2013)</option><option value="تحت 14">تحت 14 (2012)</option><option value="تحت 15">تحت 15 (2011)</option><option value="تحت 16">تحت 16 (2010)</option><option value="تحت 17">تحت 17 (2009)</option><option value="تحت 18">تحت 18 (2008)</option>
       </select>
     </div>
     <div class="qp-field"><label>الفرع</label><select id="qp-branch"><option value="">اختر الفرع...</option></select></div>
@@ -706,7 +706,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </select>
       <select id="qa-group" onchange="loadQuickPlayers()" style="background:#142;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;flex:1">
         <option value="">كل المجموعات</option>
-        <option>تحت 10</option><option>تحت 12</option><option>تحت 14</option><option>تحت 16</option><option>تحت 18</option>
+        <option value="تحت 3">تحت 3 (2023)</option><option value="تحت 4">تحت 4 (2022)</option><option value="تحت 5">تحت 5 (2021)</option><option value="تحت 6">تحت 6 (2020)</option><option value="تحت 7">تحت 7 (2019)</option><option value="تحت 8">تحت 8 (2018)</option><option value="تحت 9">تحت 9 (2017)</option><option value="تحت 10">تحت 10 (2016)</option><option value="تحت 11">تحت 11 (2015)</option><option value="تحت 12">تحت 12 (2014)</option><option value="تحت 13">تحت 13 (2013)</option><option value="تحت 14">تحت 14 (2012)</option><option value="تحت 15">تحت 15 (2011)</option><option value="تحت 16">تحت 16 (2010)</option><option value="تحت 17">تحت 17 (2009)</option><option value="تحت 18">تحت 18 (2008)</option>
       </select>
     </div>
   </div>
@@ -783,7 +783,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.9.7 — 05/07/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.9.10 — 06/07/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -866,7 +866,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
     <div id="screen-players" class="screen">
       <div class="filter-bar">
         <div class="search-wrap"><i class="ti ti-search"></i><input type="text" placeholder="بحث بالاسم..." id="pl-search" oninput="loadPlayers()"></div>
-        <select id="pl-group" onchange="loadPlayers()" style="width:130px"><option value="">كل المجموعات</option><option>تحت 10</option><option>تحت 12</option><option>تحت 14</option><option>تحت 16</option><option>تحت 18</option></select>
+        <select id="pl-group" onchange="loadPlayers()" style="width:130px"><option value="">كل المجموعات</option><option value="تحت 3">تحت 3 (2023)</option><option value="تحت 4">تحت 4 (2022)</option><option value="تحت 5">تحت 5 (2021)</option><option value="تحت 6">تحت 6 (2020)</option><option value="تحت 7">تحت 7 (2019)</option><option value="تحت 8">تحت 8 (2018)</option><option value="تحت 9">تحت 9 (2017)</option><option value="تحت 10">تحت 10 (2016)</option><option value="تحت 11">تحت 11 (2015)</option><option value="تحت 12">تحت 12 (2014)</option><option value="تحت 13">تحت 13 (2013)</option><option value="تحت 14">تحت 14 (2012)</option><option value="تحت 15">تحت 15 (2011)</option><option value="تحت 16">تحت 16 (2010)</option><option value="تحت 17">تحت 17 (2009)</option><option value="تحت 18">تحت 18 (2008)</option></select>
         <select id="pl-status" onchange="loadPlayers()" style="width:120px"><option value="">كل الحالات</option><option value="نشط">نشط</option><option value="موقوف">موقوف</option></select>
         <select id="pl-branch" onchange="loadPlayers()" style="width:130px"><option value="">كل الفروع</option></select>
       </div>
@@ -1105,8 +1105,8 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
         <div class="search-wrap"><i class="ti ti-search"></i><input type="text" placeholder="بحث باسم اللاعب..." id="evl-search" oninput="debounceEval()"></div>
         <select id="evl-group" onchange="loadEvaluations()" style="width:130px">
           <option value="">كل المجموعات</option>
-          <option>تحت 10</option><option>تحت 12</option>
-          <option>تحت 14</option><option>تحت 16</option><option>تحت 18</option>
+          <option value="تحت 3">تحت 3 (2023)</option><option value="تحت 4">تحت 4 (2022)</option><option value="تحت 5">تحت 5 (2021)</option><option value="تحت 6">تحت 6 (2020)</option><option value="تحت 7">تحت 7 (2019)</option><option value="تحت 8">تحت 8 (2018)</option><option value="تحت 9">تحت 9 (2017)</option><option value="تحت 10">تحت 10 (2016)</option><option value="تحت 11">تحت 11 (2015)</option><option value="تحت 12">تحت 12 (2014)</option>
+          <option value="تحت 13">تحت 13 (2013)</option><option value="تحت 14">تحت 14 (2012)</option><option value="تحت 15">تحت 15 (2011)</option><option value="تحت 16">تحت 16 (2010)</option><option value="تحت 17">تحت 17 (2009)</option><option value="تحت 18">تحت 18 (2008)</option>
         </select>
         <input type="date" id="evl-from" onchange="loadEvaluations()" style="width:150px">
         <input type="date" id="evl-to" onchange="loadEvaluations()" style="width:150px">
@@ -1548,7 +1548,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
     <div class="modal-head"><span class="modal-title"><i class="ti ti-user-plus"></i>تسجيل لاعب جديد</span><button class="icon-btn" onclick="closeModal('playerModal')"><i class="ti ti-x"></i></button></div>
     <div class="modal-body"><div class="form-grid">
       <div class="field"><label>الاسم الأول *</label><input id="p-fname" type="text" placeholder="أحمد"></div>
-      <div class="field"><label>اسم العائلة *</label><input id="p-lname" type="text" placeholder="محمد"></div>
+      <div class="field"><label>اسم العائلة *</label><input id="p-lname" type="text" placeholder="محمد" onblur="autoFillParent('p-lname','p-parent')"></div>
       <div class="field full"><label>تاريخ الميلاد</label>
         <div style="display:flex;gap:6px">
           <select id="p-bday" style="width:70px"><option value="">يوم</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select>
@@ -1556,8 +1556,8 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
           <select id="p-byear" style="width:90px"><option value="">السنة</option><option value="2020">2020</option><option value="2019">2019</option><option value="2018">2018</option><option value="2017">2017</option><option value="2016">2016</option><option value="2015">2015</option><option value="2014">2014</option><option value="2013">2013</option><option value="2012">2012</option><option value="2011">2011</option><option value="2010">2010</option><option value="2009">2009</option><option value="2008">2008</option><option value="2007">2007</option><option value="2006">2006</option><option value="2005">2005</option></select>
         </div>
       </div>
-      <div class="field"><label>المجموعة العمرية *</label><select id="p-group"><option value="">اختر...</option><option>تحت 10</option><option>تحت 12</option><option>تحت 14</option><option>تحت 16</option><option>تحت 18</option></select></div>
-      <div class="field"><label>اسم ولي الأمر</label><input id="p-parent" type="text" placeholder="محمد علي"></div>
+      <div class="field"><label>المجموعة العمرية *</label><select id="p-group"><option value="">اختر...</option><option value="تحت 3">تحت 3 (2023)</option><option value="تحت 4">تحت 4 (2022)</option><option value="تحت 5">تحت 5 (2021)</option><option value="تحت 6">تحت 6 (2020)</option><option value="تحت 7">تحت 7 (2019)</option><option value="تحت 8">تحت 8 (2018)</option><option value="تحت 9">تحت 9 (2017)</option><option value="تحت 10">تحت 10 (2016)</option><option value="تحت 11">تحت 11 (2015)</option><option value="تحت 12">تحت 12 (2014)</option><option value="تحت 13">تحت 13 (2013)</option><option value="تحت 14">تحت 14 (2012)</option><option value="تحت 15">تحت 15 (2011)</option><option value="تحت 16">تحت 16 (2010)</option><option value="تحت 17">تحت 17 (2009)</option><option value="تحت 18">تحت 18 (2008)</option></select></div>
+      <div class="field"><label>اسم ولي الأمر</label><input id="p-parent" type="text" placeholder="نفس اسم العائلة تلقائياً"></div>
       <div class="field"><label>هاتف ولي الأمر</label><input id="p-phone" type="text" placeholder="010xxxxxxxx"></div>
       <div class="field"><label>المدرب</label><select id="p-coach"><option value="">اختر مدرب...</option></select></div>
       <div class="field"><label>الحالة</label><select id="p-status"><option value="نشط">نشط</option><option value="موقوف">موقوف</option></select></div>
@@ -1691,7 +1691,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       <div class="field"><label>الفرع</label><select id="sc-branch"><option value="">اختر فرع...</option></select></div>
       <div class="field"><label>وقت البداية</label><input id="sc-start" type="time" value="19:00"></div>
       <div class="field"><label>وقت النهاية</label><input id="sc-end" type="time" value="21:00"></div>
-      <div class="field"><label>المجموعة</label><select id="sc-group"><option>تحت 10</option><option>تحت 12</option><option>تحت 14</option><option>تحت 16</option><option>تحت 18</option></select></div>
+      <div class="field"><label>المجموعة</label><select id="sc-group"><option value="تحت 3">تحت 3 (2023)</option><option value="تحت 4">تحت 4 (2022)</option><option value="تحت 5">تحت 5 (2021)</option><option value="تحت 6">تحت 6 (2020)</option><option value="تحت 7">تحت 7 (2019)</option><option value="تحت 8">تحت 8 (2018)</option><option value="تحت 9">تحت 9 (2017)</option><option value="تحت 10">تحت 10 (2016)</option><option value="تحت 11">تحت 11 (2015)</option><option value="تحت 12">تحت 12 (2014)</option><option value="تحت 13">تحت 13 (2013)</option><option value="تحت 14">تحت 14 (2012)</option><option value="تحت 15">تحت 15 (2011)</option><option value="تحت 16">تحت 16 (2010)</option><option value="تحت 17">تحت 17 (2009)</option><option value="تحت 18">تحت 18 (2008)</option></select></div>
       <div class="field"><label>المدرب</label><select id="sc-coach"><option value="">اختر...</option></select></div>
       <div class="field full"><label>الملعب</label><input id="sc-venue" type="text" placeholder="ستاد جامعة حلوان"></div>
     </div></div>
@@ -1793,6 +1793,16 @@ let quickAttState={};  // playerId -> 'present'|'absent'|null
 // ============================================================
 // QUICK PLAYER (fast registration - mobile-first)
 // ============================================================
+function autoFillParent(lastNameId, parentId){
+  const ln=document.getElementById(lastNameId);
+  const parent=document.getElementById(parentId);
+  if(!ln||!parent) return;
+  // Only auto-fill if parent field is empty (respect manual edits)
+  if(ln.value.trim() && !parent.value.trim()){
+    parent.value=ln.value.trim();
+  }
+}
+
 async function openQuickPlayer(){
   document.getElementById('quickPlayerOverlay').classList.add('active');
   // Populate branches
@@ -6343,7 +6353,7 @@ initAuth();
     <div class="modal-head"><span class="modal-title"><i class="ti ti-tournament"></i> إنشاء فريق دوري جديد</span><button class="icon-btn" onclick="closeModal('teamModal')"><i class="ti ti-x"></i></button></div>
     <div class="modal-body"><div class="form-grid">
       <div class="field full"><label>اسم الفريق *</label><input id="tm-name" type="text" placeholder="مثال: فريق Tick Off تحت 14"></div>
-      <div class="field"><label>الفئة العمرية</label><select id="tm-age"><option value="">اختر...</option><option>تحت 10</option><option>تحت 12</option><option>تحت 14</option><option>تحت 16</option><option>تحت 18</option></select></div>
+      <div class="field"><label>الفئة العمرية</label><select id="tm-age"><option value="">اختر...</option><option value="تحت 3">تحت 3 (2023)</option><option value="تحت 4">تحت 4 (2022)</option><option value="تحت 5">تحت 5 (2021)</option><option value="تحت 6">تحت 6 (2020)</option><option value="تحت 7">تحت 7 (2019)</option><option value="تحت 8">تحت 8 (2018)</option><option value="تحت 9">تحت 9 (2017)</option><option value="تحت 10">تحت 10 (2016)</option><option value="تحت 11">تحت 11 (2015)</option><option value="تحت 12">تحت 12 (2014)</option><option value="تحت 13">تحت 13 (2013)</option><option value="تحت 14">تحت 14 (2012)</option><option value="تحت 15">تحت 15 (2011)</option><option value="تحت 16">تحت 16 (2010)</option><option value="تحت 17">تحت 17 (2009)</option><option value="تحت 18">تحت 18 (2008)</option></select></div>
       <div class="field"><label>الموسم</label><input id="tm-season" type="text" value="2026-2027" readonly style="background:var(--bg);color:var(--primary);font-weight:700"></div>
       <div class="field"><label>المدرب</label><select id="tm-coach"><option value="">اختر مدرب...</option></select></div>
       <div class="field"><label>الفرع</label><select id="tm-branch"><option value="">اختر فرع...</option></select></div>
@@ -6412,7 +6422,7 @@ initAuth();
     <div class="modal-body"><div class="form-grid">
       <input type="hidden" id="etm-id">
       <div class="field full"><label>اسم الفريق *</label><input id="etm-name" type="text"></div>
-      <div class="field"><label>الفئة العمرية</label><select id="etm-age"><option value="">اختر...</option><option>تحت 10</option><option>تحت 12</option><option>تحت 14</option><option>تحت 16</option><option>تحت 18</option></select></div>
+      <div class="field"><label>الفئة العمرية</label><select id="etm-age"><option value="">اختر...</option><option value="تحت 3">تحت 3 (2023)</option><option value="تحت 4">تحت 4 (2022)</option><option value="تحت 5">تحت 5 (2021)</option><option value="تحت 6">تحت 6 (2020)</option><option value="تحت 7">تحت 7 (2019)</option><option value="تحت 8">تحت 8 (2018)</option><option value="تحت 9">تحت 9 (2017)</option><option value="تحت 10">تحت 10 (2016)</option><option value="تحت 11">تحت 11 (2015)</option><option value="تحت 12">تحت 12 (2014)</option><option value="تحت 13">تحت 13 (2013)</option><option value="تحت 14">تحت 14 (2012)</option><option value="تحت 15">تحت 15 (2011)</option><option value="تحت 16">تحت 16 (2010)</option><option value="تحت 17">تحت 17 (2009)</option><option value="تحت 18">تحت 18 (2008)</option></select></div>
       <div class="field"><label>الموسم</label><input id="etm-season" type="text"></div>
       <div class="field"><label>المدرب</label><select id="etm-coach"><option value="">اختر...</option></select></div>
       <div class="field"><label>الفرع</label><select id="etm-branch"><option value="">اختر...</option></select></div>
@@ -6435,7 +6445,7 @@ initAuth();
           <select id="ep-byear" style="width:90px"><option value="">السنة</option><option value="2020">2020</option><option value="2019">2019</option><option value="2018">2018</option><option value="2017">2017</option><option value="2016">2016</option><option value="2015">2015</option><option value="2014">2014</option><option value="2013">2013</option><option value="2012">2012</option><option value="2011">2011</option><option value="2010">2010</option><option value="2009">2009</option><option value="2008">2008</option><option value="2007">2007</option><option value="2006">2006</option><option value="2005">2005</option></select>
         </div>
       </div>
-      <div class="field"><label>المجموعة *</label><select id="ep-group"><option value="">اختر...</option><option>تحت 10</option><option>تحت 12</option><option>تحت 14</option><option>تحت 16</option><option>تحت 18</option></select></div>
+      <div class="field"><label>المجموعة *</label><select id="ep-group"><option value="">اختر...</option><option value="تحت 3">تحت 3 (2023)</option><option value="تحت 4">تحت 4 (2022)</option><option value="تحت 5">تحت 5 (2021)</option><option value="تحت 6">تحت 6 (2020)</option><option value="تحت 7">تحت 7 (2019)</option><option value="تحت 8">تحت 8 (2018)</option><option value="تحت 9">تحت 9 (2017)</option><option value="تحت 10">تحت 10 (2016)</option><option value="تحت 11">تحت 11 (2015)</option><option value="تحت 12">تحت 12 (2014)</option><option value="تحت 13">تحت 13 (2013)</option><option value="تحت 14">تحت 14 (2012)</option><option value="تحت 15">تحت 15 (2011)</option><option value="تحت 16">تحت 16 (2010)</option><option value="تحت 17">تحت 17 (2009)</option><option value="تحت 18">تحت 18 (2008)</option></select></div>
       <div class="field"><label>اسم ولي الأمر</label><input id="ep-parent" type="text"></div>
       <div class="field"><label>هاتف ولي الأمر</label><input id="ep-phone" type="text"></div>
       <div class="field"><label>المدرب</label><select id="ep-coach"><option value="">اختر...</option></select></div>
@@ -6630,7 +6640,7 @@ initAuth();
       <div class="field"><label>النوع</label><select id="esc-type"><option value="تدريب">تدريب</option><option value="مباراة">مباراة</option><option value="فعالية">فعالية</option></select></div>
       <div class="field"><label>وقت البداية</label><input id="esc-start" type="time"></div>
       <div class="field"><label>وقت النهاية</label><input id="esc-end" type="time"></div>
-      <div class="field"><label>المجموعة</label><select id="esc-group"><option>تحت 10</option><option>تحت 12</option><option>تحت 14</option><option>تحت 16</option><option>تحت 18</option></select></div>
+      <div class="field"><label>المجموعة</label><select id="esc-group"><option value="تحت 3">تحت 3 (2023)</option><option value="تحت 4">تحت 4 (2022)</option><option value="تحت 5">تحت 5 (2021)</option><option value="تحت 6">تحت 6 (2020)</option><option value="تحت 7">تحت 7 (2019)</option><option value="تحت 8">تحت 8 (2018)</option><option value="تحت 9">تحت 9 (2017)</option><option value="تحت 10">تحت 10 (2016)</option><option value="تحت 11">تحت 11 (2015)</option><option value="تحت 12">تحت 12 (2014)</option><option value="تحت 13">تحت 13 (2013)</option><option value="تحت 14">تحت 14 (2012)</option><option value="تحت 15">تحت 15 (2011)</option><option value="تحت 16">تحت 16 (2010)</option><option value="تحت 17">تحت 17 (2009)</option><option value="تحت 18">تحت 18 (2008)</option></select></div>
       <div class="field"><label>المدرب</label><select id="esc-coach"><option value="">اختر...</option></select></div>
       <div class="field full"><label>الملعب</label><input id="esc-venue" type="text"></div>
     </div></div>
