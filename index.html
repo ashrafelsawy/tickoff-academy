@@ -577,20 +577,35 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
 
 
 /* DRAGGABLE PITCH */
-.pitch-wrap{position:relative;width:100%;max-width:440px;margin:0 auto;aspect-ratio:10/16;background:#1a7a3c;border-radius:12px;overflow:hidden;touch-action:none;border:2px solid rgba(255,255,255,.3)}
+/* Lineup stage: subs left | pitch | subs right */
+.lineup-stage{display:flex;align-items:stretch;gap:10px;justify-content:center;width:100%}
+.subs-col{display:flex;flex-direction:column;gap:10px;justify-content:center;align-items:center;flex:0 0 84px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 6px}
+.subs-col-title{font-size:10px;font-weight:700;color:var(--text3);text-align:center;margin-bottom:2px}
+.pitch-wrap{position:relative;flex:1 1 auto;max-width:900px;aspect-ratio:16/10;background:#1a7a3c;border-radius:12px;overflow:hidden;touch-action:none;border:2px solid rgba(255,255,255,.3)}
 .pitch-lines{position:absolute;inset:0;pointer-events:none}
-.pitch-halfway{position:absolute;top:50%;left:0;right:0;height:2px;background:rgba(255,255,255,.35);transform:translateY(-1px)}
-.pitch-circle{position:absolute;left:50%;top:50%;width:32%;aspect-ratio:1;border:2px solid rgba(255,255,255,.35);border-radius:50%;transform:translate(-50%,-50%)}
-.pitch-box{position:absolute;left:50%;transform:translateX(-50%);width:44%;height:11%;border:2px solid rgba(255,255,255,.35)}
-.pitch-box-r{top:0;border-top:none}
-.pitch-box-l{bottom:0;border-bottom:none}
+.pitch-halfway{position:absolute;left:50%;top:0;bottom:0;width:2px;background:rgba(255,255,255,.35);transform:translateX(-1px)}
+.pitch-circle{position:absolute;left:50%;top:50%;width:20%;aspect-ratio:1;border:2px solid rgba(255,255,255,.35);border-radius:50%;transform:translate(-50%,-50%)}
+.pitch-box{position:absolute;top:50%;transform:translateY(-50%);width:11%;height:46%;border:2px solid rgba(255,255,255,.35)}
+.pitch-box-r{right:0;border-right:none}
+.pitch-box-l{left:0;border-left:none}
 .jersey-token{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;cursor:grab;touch-action:none;transition:opacity .1s}
 .jersey-token:active{cursor:grabbing}
-.jersey-svg{width:56px;height:58px}
+.jersey-svg{width:54px;height:56px}
 .jersey-name{font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85);margin-top:-6px;white-space:nowrap;background:rgba(0,0,0,.35);padding:1px 8px;border-radius:8px}
-#lineupFsOverlay .pitch-wrap{max-width:min(52vh,480px)}
-#lineupFsOverlay .jersey-svg{width:64px;height:66px}
+/* played check badge on bench tokens */
+.sub-token{position:relative}
+.played-badge{position:absolute;top:-3px;right:-3px;width:22px;height:22px;border-radius:50%;background:#2D8A3E;border:2px solid #fff;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:900;line-height:1;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+#lineupFsOverlay .pitch-wrap{max-width:min(88vw,1500px)}
+#lineupFsOverlay .subs-col{flex:0 0 100px}
+#lineupFsOverlay .jersey-svg{width:66px;height:68px}
 #lineupFsOverlay .jersey-name{font-size:14px}
+@media(max-width:760px){
+  .lineup-stage{flex-wrap:wrap}
+  .subs-col{flex:1 1 100%;flex-direction:row;flex-wrap:wrap;order:3}
+  .pitch-wrap{flex:1 1 100%;max-width:100%}
+  .jersey-svg{width:42px;height:44px}
+  .jersey-name{font-size:10px}
+}
 @media print{
   body *{visibility:hidden}
   #lineupFsOverlay,#lineupFsOverlay *{visibility:visible}
@@ -790,7 +805,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.9.12 — 09/07/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.9.13 — 09/07/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -3858,7 +3873,14 @@ async function renderLineup(){
   }
 
   const lineColor={gk:'#F5C518',def:'#2D8A3E',mid:'#185FA5',att:'#E03535'};
-  const lineY={att:15,mid:38,def:62,gk:87};  // percent from top: attack up (toward opponent goal), GK down
+  const lineX={gk:8,def:30,mid:54,att:80};  // percent from left: GK at own goal (left), attack toward opponent (right)
+
+  // Any starter is considered to have played — persist the flag once
+  const unmarked=starters.filter(s=>!s.has_played).map(s=>s.id);
+  if(unmarked.length){
+    await sb.from('match_squad').update({has_played:true}).in('id',unmarked);
+    starters.forEach(s=>{s.has_played=true;});
+  }
 
   // Group by line for auto-position of players without saved coords
   const lines={gk:[],def:[],mid:[],att:[]};
@@ -3872,12 +3894,12 @@ async function renderLineup(){
     const color=lineColor[line];
     let x=s.pos_x, y=s.pos_y;
     if(x==null||y==null){
-      // auto position: spread across X within the line, line sets Y
+      // auto position: line sets X, spread across Y within the line
       const arr=lines[line];
       const idx=arr.indexOf(s);
       const n=arr.length;
-      y=lineY[line];
-      x=Math.round((100/(n+1))*(idx+1));
+      x=lineX[line];
+      y=Math.round((100/(n+1))*(idx+1));
     }
     const parts=name.split(' ');
     const shortName=(parts[0]||'')+(parts[1]?' '+parts[1]:'');
@@ -3897,9 +3919,8 @@ async function renderLineup(){
         <button class="btn btn-primary btn-sm" onclick="openLineupFullscreen()"><i class="ti ti-maximize"></i> ملء الشاشة</button>
       </div>
     </div>
-    <div style="font-size:12px;color:var(--accent);text-align:center;margin-bottom:8px"><i class="ti ti-hand-finger"></i> اسحب أي قميص لتغيير مكانه — يُحفظ تلقائياً</div>
-    ${buildPitchHTML('lineup-pitch')}
-    ${buildSubsHTML(subs)}`;
+    <div style="font-size:12px;color:var(--accent);text-align:center;margin-bottom:8px"><i class="ti ti-hand-finger"></i> اسحب أي قميص لتغيير مكانه — واسحب من الدكة للملعب للتبديل · <span style="color:#6DC82A">✓</span> = شارك في المباراة</div>
+    ${buildLineupStage('lineup-pitch', subs)}`;
 
   initJerseyDrag('lineup-pitch');
   initSubSwap('lineup-pitch');
@@ -3921,14 +3942,31 @@ function buildPitchHTML(pitchId){
   </div>`;
 }
 
-function buildSubsHTML(subs){
-  if(!subs||!subs.length) return '<div id="subs-dropzone" style="margin-top:14px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;padding:20px;text-align:center;color:var(--text3);font-size:13px">دكة البدلاء فارغة — اسحب لاعباً هنا لإنزاله</div>';
-  return`<div id="subs-dropzone" style="margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px">
-    <div style="font-size:13px;font-weight:600;color:var(--text3);margin-bottom:10px"><i class="ti ti-refresh"></i> دكة البدلاء (${subs.length}) <span style="font-weight:400;font-size:11px">— اسحب لاعباً للملعب للتبديل</span></div>
-    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center">
-      ${subs.map(s=>{const p=s.players||s.external_players;const name=s.players?`${p.first_name} ${p.last_name}`:p.name;const parts=name.split(' ');return`<div class="sub-token" data-id="${s.id}" style="width:60px;height:60px;border-radius:50%;background:#888;border:2px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;text-align:center;line-height:1.15;cursor:grab;touch-action:none;user-select:none"><span>${parts[0]||''}</span>${parts[1]?`<span>${parts[1]}</span>`:''}</div>`;}).join('')}
-    </div>
+function buildLineupStage(pitchId, subs){
+  const list = subs || [];
+  const half = Math.ceil(list.length/2);
+  const left = list.slice(0, half);
+  const right = list.slice(half);
+  return`<div class="lineup-stage">
+    ${buildSubsColumn(left,'دكة (١)')}
+    ${buildPitchHTML(pitchId)}
+    ${buildSubsColumn(right,'دكة (٢)')}
   </div>`;
+}
+
+function buildSubsColumn(subs, title){
+  if(!subs||!subs.length){
+    return`<div class="subs-col"><div class="subs-col-title">${title}</div><div style="font-size:10px;color:var(--text3);text-align:center;padding:8px 0">—</div></div>`;
+  }
+  const tokens = subs.map(s=>{
+    const p=s.players||s.external_players;
+    const name=s.players?`${p.first_name} ${p.last_name}`:p.name;
+    const parts=name.split(' ');
+    const badge = s.has_played ? '<div class="played-badge" title="شارك في المباراة">\u2713</div>' : '';
+    const bg = s.has_played ? '#4a6b52' : '#888';
+    return`<div class="sub-token" data-id="${s.id}" style="width:62px;height:62px;border-radius:50%;background:${bg};border:2px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;text-align:center;line-height:1.15;cursor:grab;touch-action:none;user-select:none;flex-shrink:0">${badge}<span>${parts[0]||''}</span>${parts[1]?`<span>${parts[1]}</span>`:''}</div>`;
+  }).join('');
+  return`<div class="subs-col"><div class="subs-col-title">${title}</div>${tokens}</div>`;
 }
 
 let _dragEl=null,_dragPitch=null;
@@ -4035,7 +4073,7 @@ async function swapPlayers(subId,starterId){
   const py=starterJersey?starterJersey.y:50;
   // sub becomes starter at that position; starter becomes sub
   await Promise.all([
-    sb.from('match_squad').update({squad_status:'starter',pos_x:px,pos_y:py}).eq('id',subId),
+    sb.from('match_squad').update({squad_status:'starter',pos_x:px,pos_y:py,has_played:true}).eq('id',subId),
     sb.from('match_squad').update({squad_status:'sub',pos_x:null,pos_y:null}).eq('id',starterId),
   ]);
   toast('تم التبديل ✓');
@@ -4053,8 +4091,7 @@ function openLineupFullscreen(){
       <div style="font-size:18px;font-weight:800">${st.match.teams?.name||'—'} vs ${st.match.opponent}</div>
       <div style="font-size:12px;opacity:.7">${fmtDate(st.match.match_date)} · ${st.match.location||''}</div>
     </div>
-    ${buildPitchHTML('lineup-fs-pitch')}
-    ${buildSubsHTML(st.subs)}`;
+    ${buildLineupStage('lineup-fs-pitch', st.subs)}`;
   ov.classList.add('active');
   initJerseyDrag('lineup-fs-pitch');
   initSubSwap('lineup-fs-pitch');
