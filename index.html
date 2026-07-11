@@ -805,7 +805,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.9.13 — 09/07/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.9.14 — 09/07/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -886,11 +886,12 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
 
     <!-- PLAYERS -->
     <div id="screen-players" class="screen">
+      <div id="pl-branch-cards" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1rem"></div>
       <div class="filter-bar">
         <div class="search-wrap"><i class="ti ti-search"></i><input type="text" placeholder="بحث بالاسم..." id="pl-search" oninput="loadPlayers()"></div>
         <select id="pl-group" onchange="loadPlayers()" style="width:130px"><option value="">كل المجموعات</option><option value="تحت 3">تحت 3 (2023)</option><option value="تحت 4">تحت 4 (2022)</option><option value="تحت 5">تحت 5 (2021)</option><option value="تحت 6">تحت 6 (2020)</option><option value="تحت 7">تحت 7 (2019)</option><option value="تحت 8">تحت 8 (2018)</option><option value="تحت 9">تحت 9 (2017)</option><option value="تحت 10">تحت 10 (2016)</option><option value="تحت 11">تحت 11 (2015)</option><option value="تحت 12">تحت 12 (2014)</option><option value="تحت 13">تحت 13 (2013)</option><option value="تحت 14">تحت 14 (2012)</option><option value="تحت 15">تحت 15 (2011)</option><option value="تحت 16">تحت 16 (2010)</option><option value="تحت 17">تحت 17 (2009)</option><option value="تحت 18">تحت 18 (2008)</option></select>
         <select id="pl-status" onchange="loadPlayers()" style="width:120px"><option value="">كل الحالات</option><option value="نشط">نشط</option><option value="موقوف">موقوف</option></select>
-        <select id="pl-branch" onchange="loadPlayers()" style="width:130px"><option value="">كل الفروع</option></select>
+        <select id="pl-branch" onchange="loadBranchCards();loadPlayers()" style="width:130px"><option value="">كل الفروع</option><option value="__none__">بدون فرع</option></select>
       </div>
       <div class="table-wrap">
         <table><thead><tr><th style="width:50px">#</th><th>اللاعب</th><th>المركز</th><th>المجموعة</th><th>ولي الأمر</th><th>الهاتف</th><th>الحالة</th><th>الفرع</th><th></th></tr></thead>
@@ -1765,7 +1766,7 @@ function navigate(s){
   document.getElementById('topbarActions').innerHTML=p.actions;
   if(s==='field_mode')populateBranchSelects();
   if(s==='dashboard')loadDashboard();
-  if(s==='players'){populateBranchSelects();loadPlayers();}
+  if(s==='players'){populateBranchSelects();loadBranchCards();loadPlayers();}
   if(s==='coaches')loadCoaches();
   if(s==='subscriptions'){populateBranchSelects();loadSubs();}
   if(s==='attendance'){populateBranchSelects();loadAtt();}
@@ -2288,6 +2289,52 @@ function birthdaySoon(birthDate){
   return diff>=0&&diff<=7;
 }
 
+async function loadBranchCards(){
+  const wrap=document.getElementById('pl-branch-cards');
+  if(!wrap) return;
+  // Ensure branches loaded
+  if(!allBranches.length){const{data:brs}=await sb.from('branches').select('id,name');if(brs)allBranches=brs;}
+  // Get all active players with their branch_id
+  const{data:players}=await sb.from('players').select('branch_id').eq('status','نشط');
+  const counts={};let noBranch=0;
+  (players||[]).forEach(p=>{
+    if(!p.branch_id){noBranch++;}
+    else{counts[p.branch_id]=(counts[p.branch_id]||0)+1;}
+  });
+  const curFilter=document.getElementById('pl-branch')?.value||'';
+  let html='';
+  // one card per branch
+  allBranches.forEach(b=>{
+    const active=curFilter===String(b.id);
+    html+=`<div onclick="filterByBranchCard('${b.id}')" style="flex:1;min-width:120px;cursor:pointer;background:${active?'linear-gradient(135deg,#1A5C2A,#2D8A3E)':'var(--surface)'};border:1.5px solid ${active?'#6DC82A':'var(--border)'};border-radius:14px;padding:14px 16px;transition:all .15s">
+      <div style="font-size:12px;color:${active?'rgba(255,255,255,.85)':'var(--text3)'};font-weight:600;margin-bottom:4px"><i class="ti ti-map-pin"></i> ${b.name}</div>
+      <div style="font-size:26px;font-weight:800;color:${active?'#fff':'var(--text)'}">${counts[b.id]||0}</div>
+    </div>`;
+  });
+  // "no branch" alert card — only if there are unassigned players
+  if(noBranch>0){
+    const active=curFilter==='__none__';
+    html+=`<div onclick="filterByBranchCard('__none__')" style="flex:1;min-width:120px;cursor:pointer;background:${active?'linear-gradient(135deg,#7A3A00,#C25E00)':'rgba(224,133,53,.12)'};border:1.5px solid ${active?'#F5A623':'#C25E00'};border-radius:14px;padding:14px 16px;transition:all .15s">
+      <div style="font-size:12px;color:${active?'#fff':'#F5A623'};font-weight:700;margin-bottom:4px"><i class="ti ti-alert-triangle"></i> بدون فرع</div>
+      <div style="font-size:26px;font-weight:800;color:${active?'#fff':'#F5A623'}">${noBranch}</div>
+    </div>`;
+  }
+  wrap.innerHTML=html;
+}
+
+function filterByBranchCard(branchId){
+  const sel=document.getElementById('pl-branch');
+  const cur=sel.value;
+  // toggle off if clicking the active card
+  if(branchId==='__none__'){
+    sel.value=(cur==='__none__')?'':'__none__';
+  }else{
+    sel.value=(cur===String(branchId))?'':String(branchId);
+  }
+  loadBranchCards();
+  loadPlayers(1);
+}
+
 async function loadPlayers(p){if(p)plPage=p;
   const q=document.getElementById('pl-search').value.trim();
   const g=document.getElementById('pl-group').value;
@@ -2296,7 +2343,7 @@ async function loadPlayers(p){if(p)plPage=p;
   let query=sb.from('players').select('*',{count:'exact'}).range((plPage-1)*pp,plPage*pp-1);
   query=query.order('sort_order',{ascending:true});
   if(q)query=query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%`);
-  if(g)query=query.eq('group_age',g);if(s)query=query.eq('status',s);const pb=document.getElementById('pl-branch')?.value;if(pb)query=query.eq('branch_id',pb);
+  if(g)query=query.eq('group_age',g);if(s)query=query.eq('status',s);const pb=document.getElementById('pl-branch')?.value;if(pb==='__none__'){query=query.is('branch_id',null);}else if(pb){query=query.eq('branch_id',pb);}
   const{data,count}=await query;
   const tb=document.getElementById('pl-table');
   if(!data||!data.length){tb.innerHTML='<tr><td colspan="9" class="empty-row"><i class="ti ti-users" style="font-size:28px;display:block;margin-bottom:10px;color:var(--primary)"></i>لا يوجد لاعبون — اضغط "لاعب جديد"</td></tr>';}
@@ -5173,7 +5220,8 @@ function populateBranchSelects(){
     const sel=document.getElementById(id);
     if(!sel) return;
     const cur=sel.value;
-    sel.innerHTML='<option value="">كل الفروع</option>'+allBranches.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+    const noneOpt=(id==='pl-branch')?'<option value="__none__">بدون فرع</option>':'';
+    sel.innerHTML='<option value="">كل الفروع</option>'+noneOpt+allBranches.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
     if(cur) sel.value=cur;
   });
 
