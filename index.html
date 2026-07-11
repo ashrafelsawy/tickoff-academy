@@ -827,7 +827,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
       </div>
     </div>
     <!-- Connection -->
-    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.9.19 — 11/07/2026</span></div>
+    <div style="text-align:center;margin-bottom:6px"><span style="font-size:11px;color:var(--accent);background:rgba(109,200,42,.12);padding:3px 10px;border-radius:10px;font-weight:600">v1.9.23 — 11/07/2026</span></div>
     <div id="sidebar-date" style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;text-align:center;background:rgba(109,200,42,.08);border:1px solid rgba(109,200,42,.2);border-radius:var(--radius);padding:5px 8px"></div>
     <div class="conn-row">
       <span class="conn-dot" id="connDot"></span>
@@ -1283,7 +1283,7 @@ body.dark .team-player-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3)}
         <div class="filter-bar">
           <select id="season-filter" onchange="onSeasonChange()" style="width:150px;font-weight:700;color:var(--primary)"></select>
           <select id="mt-team-filter" onchange="loadMatches()" style="width:180px"><option value="">كل الفرق</option></select>
-          <button class="btn btn-primary" style="margin-right:auto" onclick="openModal('matchModal');loadTeamSelectForMatch()"><i class="ti ti-plus"></i> إضافة مباراة</button>
+          <button class="btn btn-primary" style="margin-right:auto" onclick="editingMatchId=null;document.querySelector('#matchModal .modal-title').innerHTML='<i class=\&quot;ti ti-ball-football\&quot;></i> إضافة مباراة';openModal('matchModal');loadTeamSelectForMatch()"><i class="ti ti-plus"></i> إضافة مباراة</button>
         </div>
         <div class="table-wrap">
           <table>
@@ -2985,6 +2985,27 @@ async function loadMatches(){
   }).join('');
 }
 
+let editingMatchId=null;
+async function openEditMatch(matchId){
+  editingMatchId=matchId;
+  const{data:match}=await sb.from('matches').select('*').eq('id',matchId).single();
+  if(!match){toast('تعذّر تحميل المباراة','error');return;}
+  // Populate team dropdown then set values
+  await loadTeamSelectForMatch();
+  document.getElementById('mc-team').value=match.team_id||'';
+  document.getElementById('mc-opponent').value=match.opponent||'';
+  document.getElementById('mc-date').value=match.match_date||'';
+  document.getElementById('mc-location').value=match.location||'';
+  document.getElementById('mc-our-score').value=match.our_score||0;
+  document.getElementById('mc-opp-score').value=match.opponent_score||0;
+  document.getElementById('mc-notes').value=match.notes||'';
+  // Update modal title
+  const titleEl=document.querySelector('#matchModal .modal-title');
+  if(titleEl) titleEl.innerHTML='<i class="ti ti-edit"></i> تعديل المباراة';
+  closeModal('matchDetailModal');
+  openModal('matchModal');
+}
+
 async function saveMatch(){
   const teamId=document.getElementById('mc-team').value;
   const opponent=document.getElementById('mc-opponent').value.trim();
@@ -2995,18 +3016,30 @@ async function saveMatch(){
   const oppScore=Number(document.getElementById('mc-opp-score').value)||0;
   const result=ourScore>oppScore?'فوز':ourScore<oppScore?'خسارة':'تعادل';
 
-  const{error}=await sb.from('matches').insert({
+  const payload={
     team_id:teamId,opponent,match_date:date,
     location:document.getElementById('mc-location').value||null,
     our_score:ourScore,opponent_score:oppScore,result,
-    season:currentSeason,
     notes:document.getElementById('mc-notes').value||null,
-  });
+  };
+
+  let error;
+  if(editingMatchId){
+    // Edit existing match (keep its season)
+    ({error}=await sb.from('matches').update(payload).eq('id',editingMatchId));
+  }else{
+    payload.season=currentSeason;
+    ({error}=await sb.from('matches').insert(payload));
+  }
   if(error){toast('خطأ: '+error.message,'error');return;}
-  toast('تم إضافة المباراة بنجاح ✓');
+  toast(editingMatchId?'تم تعديل المباراة ✓':'تم إضافة المباراة بنجاح ✓');
   closeModal('matchModal');
   document.getElementById('mc-opponent').value='';
   document.getElementById('mc-notes').value='';
+  // reset title + edit state
+  const titleEl=document.querySelector('#matchModal .modal-title');
+  if(titleEl) titleEl.innerHTML='<i class="ti ti-ball-football"></i> إضافة مباراة';
+  editingMatchId=null;
   loadMatches();
 }
 
@@ -3072,7 +3105,10 @@ async function openMatchDetail(matchId){
     <!-- SQUAD -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
       <div style="font-size:14px;font-weight:700">قائمة المباراة</div>
-      <button class="btn btn-sm btn-primary" onclick="openSquadModal('${matchId}')"><i class="ti ti-clipboard-list"></i> تحديد التشكيل</button>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sm" onclick="openEditMatch('${matchId}')"><i class="ti ti-edit"></i> تعديل المباراة</button>
+        <button class="btn btn-sm btn-primary" onclick="openSquadModal('${matchId}')"><i class="ti ti-clipboard-list"></i> تحديد التشكيل</button>
+      </div>
     </div>
     ${(starters.length||subs.length||list2.length)?`
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1.25rem">
@@ -3189,12 +3225,22 @@ async function openSquadModal(matchId){
     return;
   }
 
+  // Detect orphaned links (team_players row whose player/external record is missing)
+  const orphans=teamPlayers.filter(tp=>!tp.players&&!tp.external_players);
+  const validPlayers=teamPlayers.filter(tp=>tp.players||tp.external_players);
+  let orphanWarn='';
+  if(orphans.length){
+    orphanWarn=`<div style="background:rgba(232,85,85,.12);border:1px solid #E85;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#E85">
+      <i class="ti ti-alert-triangle"></i> يوجد ${orphans.length} لاعب مرتبط بالفريق لكن سجله محذوف أو غير متاح — لن يظهر في القائمة. راجع أعضاء الفريق.
+    </div>`;
+  }
+
   document.getElementById('squad-modal-body').innerHTML=`
-    <div style="font-size:12px;color:var(--text3);margin-bottom:12px">حدد حالة كل لاعب في هذه المباراة:</div>
+    ${orphanWarn}
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px">حدد حالة كل لاعب في هذه المباراة (${validPlayers.length}):</div>
     <div style="display:flex;flex-direction:column;gap:8px">
-      ${teamPlayers.map(tp=>{
+      ${validPlayers.map(tp=>{
         const p=tp.players||tp.external_players;
-        if(!p) return '';
         const name=tp.players?`${p.first_name} ${p.last_name}`:p.name;
         const pid=tp.player_id||tp.external_player_id;
         const isAcademy=!!tp.players;
@@ -4620,10 +4666,24 @@ async function removeFromTeam(tpId, teamId){
   else loadTeams();
 }
 
+function closeAddTeamPlayer(){
+  const teamId=document.getElementById('atp-team-id').value;
+  closeModal('addTeamPlayerModal');
+  // Refresh team lists and reopen detail to show updated squad
+  if(document.getElementById('teams-list-tab')&&document.getElementById('teams-list-tab').style.display!=='none') loadTeamsByAge();
+  else loadTeams();
+  if(teamId) openTeamDetail(teamId);
+}
+
 async function openAddPlayerToTeam(teamId){
   document.getElementById('atp-team-id').value=teamId;
   document.getElementById('atp-search').value='';
   document.getElementById('atp-ext-search').value='';
+  // Populate + reset branch/group filters
+  if(!allBranches.length){const{data:brs}=await sb.from('branches').select('id,name');if(brs)allBranches=brs;}
+  const brSel=document.getElementById('atp-branch');
+  if(brSel){brSel.innerHTML='<option value="">كل الفروع</option>'+allBranches.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');brSel.value='';}
+  const grpSel=document.getElementById('atp-group');if(grpSel)grpSel.value='';
   switchAddPlayerTab('academy');
   await searchAcademyPlayers();
   // Close team detail modal first, then open add player
@@ -4634,12 +4694,21 @@ async function openAddPlayerToTeam(teamId){
 async function searchAcademyPlayers(){
   const q=document.getElementById('atp-search').value.trim();
   const teamId=document.getElementById('atp-team-id').value;
-  let query=sb.from('players').select('id,first_name,last_name,position,group_age,photo_url');
-  if(q) query=query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%`);
-  query=query.limit(10);
-  const{data}=await query;
+  const branchId=document.getElementById('atp-branch')?.value||'';
+  const groupVal=document.getElementById('atp-group')?.value||'';
+  // Get players already in this team to exclude them
+  const{data:existing}=await sb.from('team_players').select('player_id').eq('team_id',teamId).not('player_id','is',null);
+  const takenIds=(existing||[]).map(r=>r.player_id);
+  let query=sb.from('players').select('id,first_name,last_name,position,group_age,photo_url,branch_id').eq('status','نشط');
+  if(q) query=query.or(`first_name.ilike.${q}%,last_name.ilike.${q}%`);
+  if(branchId) query=query.eq('branch_id',branchId);
+  if(groupVal) query=query.eq('group_age',groupVal);
+  query=query.order('first_name').limit(200);
+  let{data}=await query;
+  // Filter out already-added players client-side
+  data=(data||[]).filter(p=>!takenIds.includes(p.id));
   const el=document.getElementById('atp-players-list');
-  if(!data||!data.length){el.innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:1rem">لا يوجد لاعبون</div>';return;}
+  if(!data.length){el.innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:1rem">لا يوجد لاعبون متاحون</div>';return;}
   el.innerHTML=data.map(p=>`
     <div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--radius);cursor:pointer;border:1px solid transparent;transition:all .15s" onmouseover="this.style.background='var(--primary-lt)';this.style.borderColor='var(--border2)'" onmouseout="this.style.background='';this.style.borderColor='transparent'" onclick="addPlayerToTeam('${teamId}','${p.id}',null,'${p.first_name} ${p.last_name}')">
       <div class="av" style="overflow:hidden;flex-shrink:0">${p.photo_url?`<img src="${p.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:`${initials(p.first_name+' '+p.last_name)}`}</div>
@@ -4651,12 +4720,14 @@ async function searchAcademyPlayers(){
 async function searchExternalForTeam(){
   const q=document.getElementById('atp-ext-search').value.trim();
   const teamId=document.getElementById('atp-team-id').value;
-  let query=sb.from('external_players').select('*');
+  const{data:existing}=await sb.from('team_players').select('external_player_id').eq('team_id',teamId).not('external_player_id','is',null);
+  const takenIds=(existing||[]).map(r=>r.external_player_id);
+  let query=sb.from('external_players').select('*').order('name').limit(200);
   if(q) query=query.ilike('name','%'+q+'%');
-  query=query.limit(10);
-  const{data}=await query;
+  let{data}=await query;
+  data=(data||[]).filter(p=>!takenIds.includes(p.id));
   const el=document.getElementById('atp-ext-list');
-  if(!data||!data.length){el.innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:1rem">لا يوجد لاعبون خارجيون — أضف من تبويب "اللاعبون الخارجيون"</div>';return;}
+  if(!data.length){el.innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:1rem">لا يوجد لاعبون خارجيون متاحون — أضف من تبويب "اللاعبون الخارجيون"</div>';return;}
   el.innerHTML=data.map(p=>`
     <div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--radius);cursor:pointer;border:1px solid transparent;transition:all .15s" onmouseover="this.style.background='var(--amber-lt)';this.style.borderColor='var(--border2)'" onmouseout="this.style.background='';this.style.borderColor='transparent'" onclick="addPlayerToTeam('${teamId}',null,'${p.id}','${p.name}')">
       <div class="av" style="background:var(--amber-lt);color:var(--amber-dk);flex-shrink:0">${initials(p.name)}</div>
@@ -4676,10 +4747,9 @@ async function addPlayerToTeam(teamId, playerId, externalId, playerName){
     return;
   }
   toast(`تم إضافة ${playerName} للفريق ✓`);
-  closeModal('addTeamPlayerModal');
-  openTeamDetail(teamId);
-  if(document.getElementById('teams-list-tab').style.display!=='none') loadTeamsByAge();
-  else loadTeams();
+  // Keep modal open — just refresh the lists so the added player disappears
+  searchAcademyPlayers();
+  searchExternalForTeam();
 }
 
 // EXTERNAL PLAYERS
@@ -6681,7 +6751,7 @@ initAuth();
 <!-- ADD PLAYER TO TEAM MODAL -->
 <div id="addTeamPlayerModal" class="modal-overlay">
   <div class="modal">
-    <div class="modal-head"><span class="modal-title"><i class="ti ti-user-plus"></i> إضافة لاعب للفريق</span><button class="icon-btn" onclick="closeModal('addTeamPlayerModal')"><i class="ti ti-x"></i></button></div>
+    <div class="modal-head"><span class="modal-title"><i class="ti ti-user-plus"></i> إضافة لاعب للفريق</span><button class="icon-btn" onclick="closeAddTeamPlayer()"><i class="ti ti-x"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="atp-team-id">
       <div style="display:flex;gap:8px;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:.75rem">
@@ -6690,7 +6760,14 @@ initAuth();
       </div>
       <!-- Academy Players -->
       <div id="atp-academy-tab">
-        <div class="search-wrap" style="margin-bottom:1rem"><i class="ti ti-search"></i><input type="text" placeholder="ابحث عن لاعب..." id="atp-search" oninput="searchAcademyPlayers()"></div>
+        <div class="search-wrap" style="margin-bottom:.6rem"><i class="ti ti-search"></i><input type="text" placeholder="ابحث عن لاعب..." id="atp-search" oninput="searchAcademyPlayers()"></div>
+        <div style="display:flex;gap:8px;margin-bottom:1rem">
+          <select id="atp-branch" onchange="searchAcademyPlayers()" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px;font-size:13px"><option value="">كل الفروع</option></select>
+          <select id="atp-group" onchange="searchAcademyPlayers()" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px;font-size:13px">
+            <option value="">كل المجموعات</option>
+            <option value="تحت 3">تحت 3 (2023)</option><option value="تحت 4">تحت 4 (2022)</option><option value="تحت 5">تحت 5 (2021)</option><option value="تحت 6">تحت 6 (2020)</option><option value="تحت 7">تحت 7 (2019)</option><option value="تحت 8">تحت 8 (2018)</option><option value="تحت 9">تحت 9 (2017)</option><option value="تحت 10">تحت 10 (2016)</option><option value="تحت 11">تحت 11 (2015)</option><option value="تحت 12">تحت 12 (2014)</option><option value="تحت 13">تحت 13 (2013)</option><option value="تحت 14">تحت 14 (2012)</option><option value="تحت 15">تحت 15 (2011)</option><option value="تحت 16">تحت 16 (2010)</option><option value="تحت 17">تحت 17 (2009)</option><option value="تحت 18">تحت 18 (2008)</option>
+          </select>
+        </div>
         <div id="atp-players-list" style="max-height:250px;overflow-y:auto"></div>
       </div>
       <!-- External Players -->
